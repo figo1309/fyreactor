@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="头文件\net">
+      <UniqueIdentifier>{10682dbc-df3d-4e58-855e-f253c49708c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\net">
+      <UniqueIdentifier>{74ce8c43-08b1-43aa-8a80-21591ae73806}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\util">
+      <UniqueIdentifier>{4adf6b3c-89d4-476e-9b48-cd1a899bddb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\util">
+      <UniqueIdentifier>{883e1761-acb4-407d-8d8b-e5b60abb42a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\xml">
+      <UniqueIdentifier>{9b6bff15-4278-4ec7-a4e7-7fae138e5ae4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\xml">
+      <UniqueIdentifier>{f1151387-7317-4be1-85d7-8a8ea0e81918}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\include\net\reactor.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\reactorgroup.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\tcpconnection.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\tcpserver.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\define.hpp">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\reactor_epoll.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\util\timer.h">
+      <Filter>头文件\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_unknown.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_printer.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_handle.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_declaration.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_comment.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_text.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_visitor.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_element.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_document.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_node.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_attribute.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\xml_util.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\xml\define.hpp">
+      <Filter>头文件\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\net\tcpclient.h">
+      <Filter>头文件\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\util\buffer.h">
+      <Filter>头文件\util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\net\reactor_epoll.cpp">
+      <Filter>源文件\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\net\reactorgroup.cpp">
+      <Filter>源文件\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\net\tcpserver.cpp">
+      <Filter>源文件\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\timer.cpp">
+      <Filter>源文件\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\net\tcpclient.cpp">
+      <Filter>源文件\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_attribute.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_comment.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_declaration.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_document.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_element.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_node.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_printer.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_text.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_unknown.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\xml\xml_util.cpp">
+      <Filter>源文件\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\buffer.cpp">
+      <Filter>源文件\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\logger.cpp">
+      <Filter>源文件\util</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
