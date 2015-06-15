@@ -133,3 +133,49 @@ enum EEventType
 	EVENT_TIMEOUT = 1 << 5,
 	EVENT_SIGNAL = 1 << 6,
 };
+
+
+namespace fyreactor
+{
+
+		enum IO_CODE
+		{
+			CODE_SUCCESS,
+			CODE_ERROR,
+			CODE_REMOTE_CLOSED,
+		};
+
+		/* 目前只定义TCP的3个类型 */
+		enum IO_TYPE
+		{
+			HANDLE_ACCEPT,
+			HANDLE_RECV,
+			HANDLE_SEND,
+			HANDLE_COMPLETE,
+		};
+
+		enum IO_EVENT_TYPE
+		{
+			EVENT_NONE = 0,
+			EVENT_OPEN = 1 << 0,
+			EVENT_READ = 1 << 1,
+			EVENT_WRITE = 1 << 2,
+			EVENT_CLOSE = 1 << 3,
+			EVENT_ERROR = 1 << 4,
+			EVENT_TIMEOUT = 1 << 5,
+			EVENT_SIGNAL = 1 << 6,
+		};
+
+		/* 异步操作带的DATA数据 */
+#ifdef HAVE_IOCP
+		struct IO_DATA : public OVERLAPPED
+		{
+			socket_t	socket;
+			IO_TYPE		type;
+			DWORD		bytes;
+			WSABUF		buf;
+		};
+#endif
+
+
+} // namespace qing

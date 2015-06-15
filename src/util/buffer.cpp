@@ -28,10 +28,10 @@ namespace fyreactor
 		}
 	}
 
-	bool CBuffer::AddBuf(const char* msg, uint32_t len)
+	int32_t CBuffer::AddBuf(const char* msg, uint32_t len)
 	{
 		if (m_iLen + len > MAX_MESSAGE_LEGNTH)
-			return false;
+			return -1;
 
 		if (m_iSize >= m_iLen + len)
 		{
@@ -52,7 +52,7 @@ namespace fyreactor
 		}
 
 
-		return true;
+		return m_iLen;
 	}
 
 	const char* CBuffer::PopBuf(uint32_t& len)

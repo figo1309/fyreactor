@@ -5,6 +5,7 @@ athor:			葛飞跃
 discribe:		epoll响应器实现
 */
 /************************************************************************/
+#include <util/profile_test.h>
 #include <net/tcpserver.h>
 #include <net/tcpclient.h>
 #include <net/reactor_epoll.h>
@@ -62,9 +63,6 @@ namespace fyreactor
 			printf("epoll_ctl EPOLL_CTL_ADD error!");
 			return false;
 		}
-
-		if (m_eType == REACTOR_LISTEN)
-			m_iListenId = sockId;
 
 		return true;
 	}
@@ -124,9 +122,10 @@ namespace fyreactor
 			sockId = -1;
 
 			{
-				std::unique_lock<std::recursive_mutex> lock(m_mutexRecvBuf);
+				std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
 				if (!m_setRecvSock.empty())
 				{
+					CProfileTest test("HandleMessage");
 					sockId = *m_setRecvSock.begin();
 					m_setRecvSock.erase(m_setRecvSock.begin());
 
@@ -142,6 +141,8 @@ namespace fyreactor
 
 			if (sockId != -1)
 			{
+				CProfileTest test("OnMessage");
+
 				if (m_pServer != NULL)
 					m_pServer->OnMessage(sockId, message, len);
 				else if (m_pClient != NULL)
@@ -197,7 +198,7 @@ namespace fyreactor
 							m_pServer->OnAccept(newSock);
 						}
 
-						CtlEvent(m_iListenId, EVENT_READ);
+						//CtlEvent(m_iListenId, EVENT_READ);
 					}
 				}
 			}
@@ -236,13 +237,17 @@ namespace fyreactor
 						readLen = Recv(m_aEvents[i].data.fd, buf1);
 						if (readLen > 0)
 						{
-							CtlEvent(m_aEvents[i].data.fd, EVENT_READ);
+							//CtlEvent(m_aEvents[i].data.fd, EVENT_READ);
 
 							{
-								std::unique_lock<std::recursive_mutex> lock(m_mutexRecvBuf);
+								std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
+
+								CProfileTest test1("m_conditionRead1");
 								m_mapRecvBuf[m_aEvents[i].data.fd].AddBuf(buf1, readLen);
+								CProfileTest test2("m_conditionRead2");
 								m_setRecvSock.insert(m_aEvents[i].data.fd);
-								m_conditionRead.notify_one();
+								CProfileTest test3("m_conditionRead3");
+								m_conditionRead.notify_all();
 							}
 							
 							/*if (m_pServer != NULL)
@@ -298,13 +303,19 @@ namespace fyreactor
 						sockId = m_aEvents[i].data.fd;
 
 						{
+							CProfileTest test("PopBuf");
+
 							std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
 							msg = m_mapSendBuf[sockId].PopBuf(len);
 							memcpy (buf1, msg, len);
 						}
 
 						{
-							sendLen = Send(sockId, buf1, len);
+							CProfileTest test("Send");
+							{
+								//std::unique_lock<std::mutex> lock(m_mutexWrite);
+								sendLen = Send(sockId, buf1, len);
+							}
 							if (sendLen < 0)
 							{
 								if (m_pServer != NULL)
@@ -326,45 +337,71 @@ namespace fyreactor
 	uint32_t CReactor_Epoll::ConvertEventMask(uint32_t e)
 	{
 		uint32_t op = 0;
-		if (e & EVENT_READ) op |= (EPOLLIN | EPOLLONESHOT);
-		if (e & EVENT_WRITE) op |= (EPOLLOUT | EPOLLONESHOT);
-		if (e & EVENT_ERROR) op |= EPOLLERR;
+
+		switch (e)
+		{
+		case EVENT_READ:
+			op = EPOLLIN;
+			break;
+		case EVENT_WRITE:
+			op = EPOLLOUT | EPOLLONESHOT;
+			break;
+		default:
+			break;
+		}
+
 		return op;
 	}
 
 	void CReactor_Epoll::ReadySendMessage(socket_t sockId, const char* message, uint32_t len)
 	{
-		bool res = false;
+		CProfileTest test("ReadySendMessage");
+
+		int32_t res = -1;
 		int retryNum = 3;
 
 		do
 		{
+			CProfileTest test1("ReadySendMessage1");
 			{
+				CProfileTest test2("ReadySendMessage2");
 				std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
 				res = m_mapSendBuf[sockId].AddBuf(message, len);
 			}
-			if (res == true)
-				break;
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(3));
+			if (res == (int32_t)len)
+			{
+				CProfileTest test3("ReadySendMessage3");
+				//如果前面的数据已经被取出来了，则需要重新监听写事件
+				//std::unique_lock<std::mutex> lock(m_mutexWrite);	
+				CtlEvent (sockId, EVENT_WRITE);
+				return;
+			}
+			else if (res == -1)
+			{
+				CProfileTest test4("ReadySendMessage4");
+				std::this_thread::sleep_for(std::chrono::milliseconds(3));
+			}
+			else
+			{
+				return;
+			}
 		}while (--retryNum >= 0);
 
-		if (res == false)
-			printf("ReadySendMessage failed \n");
-
-		CtlEvent (sockId, EVENT_WRITE);
+		printf("ReadySendMessage failed \n");		
 	}
 
 	void CReactor_Epoll::OnClose(socket_t sockId)
 	{
 		if (m_eType == REACTOR_WRITE)
 		{
+			CProfileTest test1("OnClose REACTOR_WRITE");
+
 			std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
 			m_mapSendBuf.erase(sockId);
 		}
 		else if (m_eType == REACTOR_READ)
 		{
-			std::unique_lock<std::recursive_mutex> lock(m_mutexRecvBuf);
+			std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
 			m_mapRecvBuf.erase(sockId);
 			m_setRecvSock.erase(sockId);
 		}
@@ -390,8 +427,13 @@ namespace fyreactor
 			return false;
 		}
 
-		int sendMax = MAX_MESSAGE_LEGNTH;
+		int sendMax = MAX_SEND_SIZE;
 		if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char*)&sendMax, sizeof(sendMax)) == -1)
+		{
+			return false;
+		}
+
+		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&sendMax, sizeof(sendMax)) == -1)
 		{
 			return false;
 		}
@@ -486,6 +528,8 @@ namespace fyreactor
 
 	int CReactor_Epoll::Recv(socket_t sockId, char* buf)
 	{
+		CProfileTest test("Recv");
+
 		int result = 0;
 		int hasRead = 0;
 

@@ -21,7 +21,7 @@ namespace fyreactor
 		CBuffer();
 		~CBuffer();
 
-		bool AddBuf(const char* msg, uint32_t len);
+		int32_t AddBuf(const char* msg, uint32_t len);
 		const char* PopBuf(uint32_t& len);
 
 	private:

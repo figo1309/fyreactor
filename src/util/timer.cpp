@@ -138,13 +138,10 @@ namespace fyreactor
 						//mark2:这里有一点特殊操作，为了确保m_outMutex -> m_mutexTimer这样的加锁顺序，因为对外而言，只能是m_outMutex -> m_mutexTimer
 						//的加锁顺序，如果这里不这样做，会出现两个线程两个锁反序加锁，从而导致死锁
 						lock.unlock();
-
 						std::unique_lock<std::recursive_mutex> lock1(*m_outMutex);
-						std::unique_lock<std::recursive_mutex> lock2(m_mutexTimer);
-						if (!firstTimer->m_bDeleted)
-							firstTimer->m_pFunc();
-
 						lock.lock();
+						if (!firstTimer->m_bDeleted)
+							firstTimer->m_pFunc();						
 					}
 					else
 					{

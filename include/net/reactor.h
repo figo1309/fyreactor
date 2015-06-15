@@ -36,11 +36,6 @@ namespace fyreactor
 		virtual void Stop() = 0;
 		virtual void ReadySendMessage(socket_t sockId, const char* message, uint32_t len) = 0;
 		virtual void OnClose(socket_t sockId) = 0;
-
-	protected:		
-		virtual socket_t DoAccept() = 0;
-		virtual int Recv(socket_t sockId, char* buf) = 0;
-		virtual int Send(socket_t sockId, const char* message, uint32_t len) = 0;
 	};
 
 

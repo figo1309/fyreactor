@@ -12,8 +12,13 @@ discribe:		响应器群头文件
 #include "define.hpp"
 #include "reactor_epoll.h"
 
+#ifdef HAVE_EPOLL
 #define SERVER_REACTOR_NUM 3		//必须大于等于3
 #define CLIENT_REACTOR_NUM 2		//暂时必须为2
+#elif defined HAVE_IOCP
+#define SERVER_REACTOR_NUM 1		
+#define CLIENT_REACTOR_NUM 1		
+#endif
 
 namespace fyreactor
 {
