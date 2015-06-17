@@ -66,6 +66,14 @@ namespace fyreactor
 		{
 			delete[]m_acceptIoData.buf.buf;
 		}
+		for (auto iter = m_mapRecvIoData.begin(); iter != m_mapRecvIoData.end(); ++iter)
+		{
+			delete[](iter->second.buf.buf);
+		}
+		for (auto iter = m_mapSendIoData.begin(); iter != m_mapSendIoData.end(); ++iter)
+		{
+			delete[](iter->second.buf.buf);
+		}
 	}	
 
 	bool CReactor_Iocp::AddEvent(socket_t sockId, uint32_t e)

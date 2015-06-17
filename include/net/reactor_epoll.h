@@ -24,8 +24,16 @@ namespace fyreactor
 	class CReactor_Epoll:public CReactor
 	{
 	public:
-		CReactor_Epoll(CTCPServer* server, EReactorType type);
-		CReactor_Epoll(CTCPClient* client, EReactorType type);
+		CReactor_Epoll(CTCPServer* server, EReactorType type, handle_t handle, \
+			std::mutex& mutexSendBuf, \
+			std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
+			std::mutex&	mutexEpoll);
+
+		CReactor_Epoll(CTCPClient* client, EReactorType type, handle_t handle, \
+			std::mutex& mutexSendBuf, \
+			std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
+			std::mutex&	mutexEpoll);
+
 		virtual ~CReactor_Epoll();
 
 		bool Listen(const std::string& ip, int port);
@@ -48,7 +56,6 @@ namespace fyreactor
 		uint32_t ConvertEventMask(uint32_t e);
 		socket_t CreateNewSocket();
 		bool	InitSocket(socket_t sockId);
-		void HandleMessage();
 
 	private:
 		CTCPServer*							m_pServer;
@@ -59,15 +66,10 @@ namespace fyreactor
 		EReactorType						m_eType;
 		socket_t							m_iListenId;
 
-		std::recursive_mutex				m_mutexSendBuf;
-		std::unordered_map<socket_t, CBuffer>	m_mapSendBuf;
-		
-		std::mutex								m_mutexRecvBuf;
-		std::set<socket_t>						m_setRecvSock;
-		std::unordered_map<socket_t, CBuffer>	m_mapRecvBuf;
-		std::condition_variable					m_conditionRead;
+		std::mutex&								m_mutexSendBuf;
+		std::unordered_map<socket_t, CBuffer>&	m_mapSendBuf;
 
-		std::mutex								m_mutexWrite;
+		std::mutex&							m_mutexEpoll;
 	};
 
 

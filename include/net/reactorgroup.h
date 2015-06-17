@@ -13,8 +13,8 @@ discribe:		响应器群头文件
 #include "reactor_epoll.h"
 
 #ifdef HAVE_EPOLL
-#define SERVER_REACTOR_NUM 3		//必须大于等于3
-#define CLIENT_REACTOR_NUM 2		//暂时必须为2
+#define SERVER_REACTOR_NUM 7		//必须大于等于3
+#define CLIENT_REACTOR_NUM 6		//暂时必须为2
 #elif defined HAVE_IOCP
 #define SERVER_REACTOR_NUM 1		
 #define CLIENT_REACTOR_NUM 1		
@@ -55,6 +55,12 @@ namespace fyreactor
 		SReactorTread*		m_aTreadReactor;
 		bool				m_bServerOrClient;
 		int					m_iReactorNum;		
+
+		std::mutex								m_mutexSendBuf;
+		std::unordered_map<socket_t, CBuffer>	m_mapSendBuf;
+
+		std::mutex								m_mutexReadEpoll;
+		std::mutex								m_mutexWriteEpoll;
 	};	
 }
 

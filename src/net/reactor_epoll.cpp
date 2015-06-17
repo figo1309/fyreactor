@@ -11,43 +11,47 @@ discribe:		epoll响应器实现
 #include <net/reactor_epoll.h>
 
 #ifdef HAVE_EPOLL
+#include <netinet/tcp.h>
+
+#define READ_EVENT_SIZE 10
+#define WRITE_EVENT_SIZE 10
 
 namespace fyreactor
 {
-	CReactor_Epoll::CReactor_Epoll(CTCPServer* server, EReactorType type)
+	CReactor_Epoll::CReactor_Epoll(CTCPServer* server, EReactorType type, handle_t handle, \
+		std::mutex& mutexSendBuf, \
+		std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
+		std::mutex&	mutexEpoll)
 		: m_pServer (server)
 		, m_pClient(NULL)
+		, m_iHandle(handle)
 		, m_bRun(false)
 		, m_eType (type)
 		, m_iListenId(-1)
+		, m_mutexSendBuf(mutexSendBuf)
+		, m_mapSendBuf(mapSendBuf)
+		, m_mutexEpoll(mutexEpoll)
 	{
-		m_iHandle = epoll_create(MAX_EVENT_SIZE);
-		if (m_iHandle == -1)
-		{
-			printf("epoll_create() Error.");
-		}
 	}
 
-	CReactor_Epoll::CReactor_Epoll(CTCPClient* client, EReactorType type)
+	CReactor_Epoll::CReactor_Epoll(CTCPClient* client, EReactorType type, handle_t handle, \
+		std::mutex& mutexSendBuf, \
+		std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
+		std::mutex&	mutexEpoll)
 		: m_pServer (NULL)
 		, m_pClient(client)
+		, m_iHandle(handle)
 		, m_bRun(false)
 		, m_eType (type)
 		, m_iListenId(-1)
+		, m_mutexSendBuf(mutexSendBuf)
+		, m_mapSendBuf(mapSendBuf)
+		, m_mutexEpoll(mutexEpoll)
 	{
-		m_iHandle = epoll_create(MAX_EVENT_SIZE);
-		if (m_iHandle == -1)
-		{
-			printf("epoll_create() Error.");
-		}
 	}
 
 	CReactor_Epoll::~CReactor_Epoll()
 	{
-		if (m_iHandle != -1)
-		{
-			::close(m_iHandle);
-		}
 	}	
 
 	bool CReactor_Epoll::AddEvent(socket_t sockId, uint32_t e)
@@ -98,59 +102,7 @@ namespace fyreactor
 
 	void CReactor_Epoll::Loop(int32 timeout)
 	{
-		if (m_eType == REACTOR_READ)
-		{
-			std::thread thread2(std::bind(&CReactor_Epoll::HandleMessage, this));
-			LoopThread(timeout);
-
-			thread2.join();
-		}
-		else
-			LoopThread(timeout);
-	}
-
-	void CReactor_Epoll::HandleMessage()
-	{
-		socket_t sockId;
-		char *message = new char[MAX_MESSAGE_LEGNTH];
-
-		const char* buf;
-		uint32_t len;
-
-		do
-		{
-			sockId = -1;
-
-			{
-				std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
-				if (!m_setRecvSock.empty())
-				{
-					CProfileTest test("HandleMessage");
-					sockId = *m_setRecvSock.begin();
-					m_setRecvSock.erase(m_setRecvSock.begin());
-
-					buf = m_mapRecvBuf[sockId].PopBuf(len);
-					memcpy(message, buf, len);
-				}
-				else
-				{
-					m_conditionRead.wait_for(lock, std::chrono::seconds(1));
-					continue;
-				}
-			}
-
-			if (sockId != -1)
-			{
-				CProfileTest test("OnMessage");
-
-				if (m_pServer != NULL)
-					m_pServer->OnMessage(sockId, message, len);
-				else if (m_pClient != NULL)
-					m_pClient->OnMessage(sockId, message, len);
-			}
-		}while (m_bRun);
-
-		delete []message;
+		LoopThread(timeout);
 	}
 
 	void CReactor_Epoll::LoopThread(int32 timeout)
@@ -210,7 +162,10 @@ namespace fyreactor
 
 			while (m_bRun)
 			{
-				result = epoll_wait(m_iHandle, m_aEvents, MAX_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+				{
+					std::unique_lock<std::mutex> lock (m_mutexEpoll);
+					result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+				}
 
 				if (result <  0)
 				{
@@ -236,24 +191,11 @@ namespace fyreactor
 					{
 						readLen = Recv(m_aEvents[i].data.fd, buf1);
 						if (readLen > 0)
-						{
-							//CtlEvent(m_aEvents[i].data.fd, EVENT_READ);
-
-							{
-								std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
-
-								CProfileTest test1("m_conditionRead1");
-								m_mapRecvBuf[m_aEvents[i].data.fd].AddBuf(buf1, readLen);
-								CProfileTest test2("m_conditionRead2");
-								m_setRecvSock.insert(m_aEvents[i].data.fd);
-								CProfileTest test3("m_conditionRead3");
-								m_conditionRead.notify_all();
-							}
-							
-							/*if (m_pServer != NULL)
+						{							
+							if (m_pServer != NULL)
 								m_pServer->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
 							else if (m_pClient != NULL)
-								m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);*/
+								m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
 						}
 						else if (readLen == -1)
 						{
@@ -269,14 +211,17 @@ namespace fyreactor
 		//3. 写
 		else if (m_eType == REACTOR_WRITE)
 		{
-			int sendLen;
 			socket_t sockId;
-			const char *msg;
+			int sendLen;
+			const char* msg;
 			uint32_t len;
 
 			while (m_bRun)
 			{
-				result = epoll_wait(m_iHandle, m_aEvents, MAX_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+				{
+					std::unique_lock<std::mutex> lock (m_mutexEpoll);
+					result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+				}
 
 				if (result <  0)
 				{
@@ -303,19 +248,13 @@ namespace fyreactor
 						sockId = m_aEvents[i].data.fd;
 
 						{
-							CProfileTest test("PopBuf");
-
-							std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
+							std::unique_lock<std::mutex> lock(m_mutexSendBuf);
 							msg = m_mapSendBuf[sockId].PopBuf(len);
 							memcpy (buf1, msg, len);
 						}
 
 						{
-							CProfileTest test("Send");
-							{
-								//std::unique_lock<std::mutex> lock(m_mutexWrite);
-								sendLen = Send(sockId, buf1, len);
-							}
+							sendLen = Send(sockId, buf1, len);
 							if (sendLen < 0)
 							{
 								if (m_pServer != NULL)
@@ -341,10 +280,10 @@ namespace fyreactor
 		switch (e)
 		{
 		case EVENT_READ:
-			op = EPOLLIN;
+			op = EPOLLIN | EPOLLET;
 			break;
 		case EVENT_WRITE:
-			op = EPOLLOUT | EPOLLONESHOT;
+			op = EPOLLOUT | EPOLLONESHOT | EPOLLET;
 			break;
 		default:
 			break;
@@ -355,36 +294,29 @@ namespace fyreactor
 
 	void CReactor_Epoll::ReadySendMessage(socket_t sockId, const char* message, uint32_t len)
 	{
-		CProfileTest test("ReadySendMessage");
-
 		int32_t res = -1;
 		int retryNum = 3;
 
 		do
 		{
-			CProfileTest test1("ReadySendMessage1");
 			{
-				CProfileTest test2("ReadySendMessage2");
-				std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
+				std::unique_lock<std::mutex> lock(m_mutexSendBuf);
 				res = m_mapSendBuf[sockId].AddBuf(message, len);
 			}
 			if (res == (int32_t)len)
 			{
-				CProfileTest test3("ReadySendMessage3");
-				//如果前面的数据已经被取出来了，则需要重新监听写事件
-				//std::unique_lock<std::mutex> lock(m_mutexWrite);	
 				CtlEvent (sockId, EVENT_WRITE);
 				return;
 			}
 			else if (res == -1)
 			{
-				CProfileTest test4("ReadySendMessage4");
 				std::this_thread::sleep_for(std::chrono::milliseconds(3));
 			}
 			else
 			{
 				return;
 			}
+
 		}while (--retryNum >= 0);
 
 		printf("ReadySendMessage failed \n");		
@@ -394,16 +326,8 @@ namespace fyreactor
 	{
 		if (m_eType == REACTOR_WRITE)
 		{
-			CProfileTest test1("OnClose REACTOR_WRITE");
-
-			std::unique_lock<std::recursive_mutex> lock(m_mutexSendBuf);
+			std::unique_lock<std::mutex> lock(m_mutexSendBuf);
 			m_mapSendBuf.erase(sockId);
-		}
-		else if (m_eType == REACTOR_READ)
-		{
-			std::unique_lock<std::mutex> lock(m_mutexRecvBuf);
-			m_mapRecvBuf.erase(sockId);
-			m_setRecvSock.erase(sockId);
 		}
 	}
 
@@ -424,6 +348,12 @@ namespace fyreactor
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&i, sizeof(int)) == -1)
 		{
 			printf("setsocketopt SO_REUSEADDR error");
+			return false;
+		}
+
+		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(int)) == -1)
+		{
+			printf("setsocketopt TCP_NODELAY error");
 			return false;
 		}
 
@@ -528,8 +458,6 @@ namespace fyreactor
 
 	int CReactor_Epoll::Recv(socket_t sockId, char* buf)
 	{
-		CProfileTest test("Recv");
-
 		int result = 0;
 		int hasRead = 0;
 

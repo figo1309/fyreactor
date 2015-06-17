@@ -20,16 +20,29 @@ namespace fyreactor
 		m_aTreadReactor = new SReactorTread[m_iReactorNum];
 		
 #ifdef HAVE_EPOLL
-		//1.第一个reactor是接收连接reactor
-		//2.第二个reactor是写reactor
-		//3.其他reactor是读reactor
-		m_aTreadReactor[0].m_pReactor = new CReactor_Epoll(server, REACTOR_LISTEN);
-		m_aTreadReactor[1].m_pReactor = new CReactor_Epoll(server, REACTOR_WRITE);
-		
-		for (int i = 2; i < m_iReactorNum; ++i)
+		//1.最后一个reactor是接收连接reactor
+		//2.偶数reactor是读reactor
+		//3.奇数reactor是写reactor
+		handle_t listenHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
+		if ((listenHandle == -1) || (readHandle == -1) || (writeHandle == -1))
 		{
-			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(server, REACTOR_READ);
+			printf("epoll_create() Error.");
 		}
+
+		m_aTreadReactor[m_iReactorNum - 1].m_pReactor = new CReactor_Epoll(server, REACTOR_LISTEN, listenHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexReadEpoll);
+		
+		for (int i = 0; i < m_iReactorNum - 1; i += 2)
+		{
+			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(server, REACTOR_READ, readHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexReadEpoll);			
+		}
+		for (int i = 1; i < m_iReactorNum - 1; i += 2)
+		{
+			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(server, REACTOR_WRITE, writeHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexWriteEpoll);
+		}
+
+		
 #elif defined HAVE_IOCP
 		m_aTreadReactor[0].m_pReactor = new CReactor_Iocp(server);
 #endif
@@ -41,11 +54,23 @@ namespace fyreactor
 	{
 		m_aTreadReactor = new SReactorTread[m_iReactorNum];
 #ifdef HAVE_EPOLL
-		//1.第一个reactor是读reactor
-		//2.第二个reactor是写reactor
+		//2.偶数reactor是读reactor
+		//3.奇数reactor是写reactor
+		handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
+		if ((readHandle == -1) || (writeHandle == -1))
+		{
+			printf("epoll_create() Error.");
+		}
 
-		m_aTreadReactor[0].m_pReactor = new CReactor_Epoll(client, REACTOR_READ);
-		m_aTreadReactor[1].m_pReactor = new CReactor_Epoll(client, REACTOR_WRITE);
+		for (int i = 0; i < m_iReactorNum; i += 2)
+		{
+			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(client, REACTOR_READ, readHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexReadEpoll);
+		}
+		for (int i = 1; i < m_iReactorNum; i += 2)
+		{
+			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(client, REACTOR_WRITE, writeHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexWriteEpoll);
+		}
 #elif defined HAVE_IOCP
 		m_aTreadReactor[0].m_pReactor = new CReactor_Iocp(client);
 #endif
@@ -71,8 +96,8 @@ namespace fyreactor
 	{
 		if (m_bServerOrClient == true)
 		{
-			//第一个reactor是专门的接收连接reactor
-			m_aTreadReactor[0].m_pReactor->Listen(ip, port);
+			//最后一个reactor是专门的接收连接reactor
+			m_aTreadReactor[m_iReactorNum - 1].m_pReactor->Listen(ip, port);
 		}
 	}
 
@@ -100,13 +125,13 @@ namespace fyreactor
 	
 	void CReactorGroup::Run()
 	{
-		for (int i = 1; i < m_iReactorNum; ++i)
+		for (int i = 0; i < m_iReactorNum - 1; ++i)
 		{
-			m_aTreadReactor[i].m_pThread = new std::thread(std::bind(&CReactor::Loop, m_aTreadReactor[i].m_pReactor, 10));
+			m_aTreadReactor[i].m_pThread = new std::thread(std::bind(&CReactor::Loop, m_aTreadReactor[i].m_pReactor, 1000));
 		}
-		m_aTreadReactor[0].m_pReactor->Loop(10);
+		m_aTreadReactor[m_iReactorNum - 1].m_pReactor->Loop(1000);
 
-		for (int i = 1; i < m_iReactorNum; ++i)
+		for (int i = 0; i < m_iReactorNum - 1; ++i)
 		{
 			m_aTreadReactor[i].m_pThread->join();
 			delete m_aTreadReactor[i].m_pThread;
@@ -119,9 +144,7 @@ namespace fyreactor
 		if (m_bServerOrClient)
 		{
 #ifdef HAVE_EPOLL
-			int chooseReactor = sockId % (m_iReactorNum - 2) + 2;
-			m_aTreadReactor[chooseReactor].m_pReactor->AddEvent(sockId, EVENT_READ);
-
+			m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
 			m_aTreadReactor[1].m_pReactor->AddEvent(sockId, 0);
 #elif defined HAVE_IOCP
 			m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
