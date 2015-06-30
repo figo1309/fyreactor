@@ -100,158 +100,152 @@ namespace fyreactor
 		return true;
 	}
 
-	void CReactor_Epoll::Loop(int32 timeout)
+	void CReactor_Epoll::LoopAccept(int32 timeout)
 	{
-		LoopThread(timeout);
+		int32_t result;
+		socket_t newSock = -1;
+
+		while (m_bRun)
+		{
+			result = epoll_wait(m_iHandle, m_aEvents, MAX_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+
+			if (result <  0)
+			{
+				if (errno == EINTR)
+				{
+					continue;
+				}
+				else
+				{
+					printf("epoll_wait end,errno=%d", errno);
+					break;;
+				}
+			}
+
+			if (result == 0)
+			{
+				continue;
+			}
+
+			for (int32_t i = 0; i<result; i++)
+			{
+				if (m_aEvents[i].data.fd == m_iListenId)
+				{
+					newSock = DoAccept();
+					if (newSock != -1)
+					{
+						//通知tcpserver
+						m_pServer->OnAccept(newSock);
+					}
+
+					//CtlEvent(m_iListenId, EVENT_READ);
+				}
+			}
+		}
 	}
 
-	void CReactor_Epoll::LoopThread(int32 timeout)
+	void CReactor_Epoll::LoopRead(int32 timeout)
 	{
 		char* buf1 = new char[MAX_MESSAGE_LEGNTH];
-
-		m_bRun = true;
 		int32_t result;
+		int readLen;
 
-		//1. 接收连接
-		if (m_eType == REACTOR_LISTEN)
+		while (m_bRun)
 		{
-			socket_t newSock = -1;
-
-			while (m_bRun)
 			{
-				result = epoll_wait(m_iHandle, m_aEvents, MAX_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+				std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+			}
 
-				if (result <  0)
-				{
-					if (errno == EINTR)
-					{
-						continue;
-					}
-					else
-					{
-						printf("epoll_wait end,errno=%d", errno);
-						break;;
-					}
-				}
-
-				if (result == 0)
+			if (result <  0)
+			{
+				if (errno == EINTR)
 				{
 					continue;
 				}
-
-				for (int32_t i = 0; i<result; i++)
+				else
 				{
-					if (m_aEvents[i].data.fd == m_iListenId)
-					{
-						newSock = DoAccept();
-						if (newSock != -1)
-						{
-							//通知tcpserver
-							m_pServer->OnAccept(newSock);
-						}
-
-						//CtlEvent(m_iListenId, EVENT_READ);
-					}
+					printf("epoll_wait end,errno=%d", errno);
+					break;
 				}
 			}
-		}
-		//2. 读
-		else if (m_eType == REACTOR_READ)
-		{
-			int readLen;
 
-			while (m_bRun)
+			if (result == 0)
 			{
-				{
-					std::unique_lock<std::mutex> lock (m_mutexEpoll);
-					result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
-				}
+				continue;
+			}
 
-				if (result <  0)
+			for (int32_t i = 0; i<result; i++)
+			{
+				if (m_aEvents[i].events & EPOLLIN)
 				{
-					if (errno == EINTR)
-					{
-						continue;
+					readLen = Recv(m_aEvents[i].data.fd, buf1);
+					if (readLen > 0)
+					{							
+						if (m_pServer != NULL)
+							m_pServer->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
+						else if (m_pClient != NULL)
+							m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
 					}
-					else
+					else if (readLen == -1)
 					{
-						printf("epoll_wait end,errno=%d", errno);
-						break;
+						if (m_pServer != NULL)
+							m_pServer->OnClose(m_aEvents[i].data.fd);
+						else if (m_pClient != NULL)
+							m_pClient->OnClose(m_aEvents[i].data.fd);
 					}
-				}
-
-				if (result == 0)
-				{
-					continue;
-				}
-
-				for (int32_t i = 0; i<result; i++)
-				{
-					if (m_aEvents[i].events & EPOLLIN)
-					{
-						readLen = Recv(m_aEvents[i].data.fd, buf1);
-						if (readLen > 0)
-						{							
-							if (m_pServer != NULL)
-								m_pServer->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
-							else if (m_pClient != NULL)
-								m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
-						}
-						else if (readLen == -1)
-						{
-							if (m_pServer != NULL)
-								m_pServer->OnClose(m_aEvents[i].data.fd);
-							else if (m_pClient != NULL)
-								m_pClient->OnClose(m_aEvents[i].data.fd);
-						}
-					}				
-				}
+				}				
 			}
 		}
-		//3. 写
-		else if (m_eType == REACTOR_WRITE)
+
+		delete []buf1;
+	}
+
+	void CReactor_Epoll::LoopWrite(int32 timeout)
+	{
+		char* buf1 = new char[MAX_MESSAGE_LEGNTH];
+		int32_t result;
+		socket_t sockId;
+		int sendLen;
+		const char* msg;
+		uint32_t len;
+
+		while (m_bRun)
 		{
-			socket_t sockId;
-			int sendLen;
-			const char* msg;
-			uint32_t len;
-
-			while (m_bRun)
 			{
-				{
-					std::unique_lock<std::mutex> lock (m_mutexEpoll);
-					result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
-				}
+				std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+			}
 
-				if (result <  0)
-				{
-					if (errno == EINTR)
-					{
-						continue;
-					}
-					else
-					{
-						printf("epoll_wait end,errno=%d", errno);
-						break;
-					}
-				}
-
-				if (result == 0)
+			if (result <  0)
+			{
+				if (errno == EINTR)
 				{
 					continue;
 				}
-
-				for (int32_t i = 0; i<result; i++)
+				else
 				{
-					if (m_aEvents[i].events & EPOLLOUT)
-					{
-						sockId = m_aEvents[i].data.fd;
+					printf("epoll_wait end,errno=%d", errno);
+					break;
+				}
+			}
 
-						{
-							std::unique_lock<std::mutex> lock(m_mutexSendBuf);
-							msg = m_mapSendBuf[sockId].PopBuf(len);
-							memcpy (buf1, msg, len);
-						}
+			if (result == 0)
+			{
+				continue;
+			}
+
+			for (int32_t i = 0; i<result; i++)
+			{
+				if (m_aEvents[i].events & EPOLLOUT)
+				{
+					sockId = m_aEvents[i].data.fd;
+
+					{
+						std::unique_lock<std::mutex> lock(m_mutexSendBuf);
+						msg = m_mapSendBuf[sockId].PopBuf(len);
+						memcpy (buf1, msg, len);
+					}
 
 						{
 							sendLen = Send(sockId, buf1, len);
@@ -265,12 +259,32 @@ namespace fyreactor
 								break;
 							}
 						}
-					}					
-				}
+				}					
 			}
 		}
 
 		delete []buf1;
+	}
+
+	void CReactor_Epoll::Loop(int32 timeout)
+	{
+		m_bRun = true;
+
+		//1. 接收连接
+		if (m_eType == REACTOR_LISTEN)
+		{
+			LoopAccept(timeout);
+		}
+		//2. 读
+		else if (m_eType == REACTOR_READ)
+		{
+			LoopRead(timeout);
+		}
+		//3. 写
+		else if (m_eType == REACTOR_WRITE)
+		{
+			LoopWrite(timeout);
+		}
 	}
 
 	uint32_t CReactor_Epoll::ConvertEventMask(uint32_t e)
@@ -430,7 +444,8 @@ namespace fyreactor
 		}
 
 		m_iListenId = listen_socket;
-		AddEvent(m_iListenId, EVENT_READ);
+		if (!AddEvent(m_iListenId, EVENT_READ))
+			return false;
 
 		return true;
 	}

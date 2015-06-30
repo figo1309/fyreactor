@@ -19,7 +19,8 @@ namespace fyreactor
 		: m_pServer (server)
 		, m_pClient(NULL)
 		, m_bRun(false)
-		, m_iListenId(-1)
+		, m_iListenId(0)
+		, m_iNewSockId(0)
 	{
 
 		WSADATA wsa;
@@ -34,14 +35,18 @@ namespace fyreactor
 			printf("CreateIoCompletionPort() Error.");
 		}
 
-		
+		memset(&m_acceptIoData, 0, sizeof(IO_DATA));
+		m_acceptIoData.socket = 0;
+		m_acceptIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
+		m_acceptIoData.buf.len = MAX_MESSAGE_LEGNTH;
 	}
 
 	CReactor_Iocp::CReactor_Iocp(CTCPClient* client)
 		: m_pServer (NULL)
 		, m_pClient(client)
 		, m_bRun(false)
-		, m_iListenId(-1)
+		, m_iListenId(0)
+		, m_iNewSockId(0)
 	{
 		WSADATA wsa;
 		if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -54,6 +59,11 @@ namespace fyreactor
 		{
 			printf("CreateIoCompletionPort() Error.");
 		}
+
+		memset(&m_acceptIoData, 0, sizeof(IO_DATA));
+		m_acceptIoData.socket = 0;
+		m_acceptIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
+		m_acceptIoData.buf.len = MAX_MESSAGE_LEGNTH;
 	}
 
 	CReactor_Iocp::~CReactor_Iocp()
@@ -84,30 +94,31 @@ namespace fyreactor
 			return false;
 		}
 
-		if (e == EVENT_READ)
+		if (e == (uint32_t)EVENT_READ)
 		{
-			IO_DATA& recvIoData = m_mapRecvIoData[sockId];
-			memset(&recvIoData, 0, sizeof(IO_DATA));
-			recvIoData.socket = sockId;
-			recvIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
-			recvIoData.buf.len = MAX_MESSAGE_LEGNTH;
+			if (m_mapRecvIoData.find(sockId) == m_mapRecvIoData.end())
+			{
+				IO_DATA& recvIoData = m_mapRecvIoData[sockId];
+				memset(&recvIoData, 0, sizeof(IO_DATA));
+				recvIoData.socket = sockId;
+				recvIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
+				recvIoData.buf.len = MAX_MESSAGE_LEGNTH;
+			}
 
-			IO_DATA& sendIoData = m_mapSendIoData[sockId];
-			memset(&sendIoData, 0, sizeof(IO_DATA));
-			sendIoData.socket = sockId;
-			sendIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
-			sendIoData.buf.len = MAX_MESSAGE_LEGNTH;
+			if (m_mapSendIoData.find(sockId) == m_mapSendIoData.end())
+			{
+				IO_DATA& sendIoData = m_mapSendIoData[sockId];
+				memset(&sendIoData, 0, sizeof(IO_DATA));
+				sendIoData.socket = sockId;
+				sendIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
+				sendIoData.buf.len = MAX_MESSAGE_LEGNTH;
+			}
 
 			if (!Recv(sockId))
 				return false;
 		}
-		else if (e == EVENT_OPEN)
+		else if (e == (uint32_t)EVENT_OPEN)
 		{
-			memset(&m_acceptIoData, 0, sizeof(IO_DATA));
-			m_acceptIoData.socket = sockId;
-			m_acceptIoData.buf.buf = new char[MAX_MESSAGE_LEGNTH];
-			m_acceptIoData.buf.len = MAX_MESSAGE_LEGNTH;
-
 			DoAccept();
 		}
 
@@ -116,6 +127,16 @@ namespace fyreactor
 
 	bool CReactor_Iocp::CtlEvent(socket_t sockId, uint32_t e)
 	{
+		if (e == EVENT_READ)
+		{
+			if (!Recv(sockId))
+				return false;
+		}
+		else if (e == EVENT_OPEN)
+		{
+			DoAccept();
+		}
+
 		return true;
 	}
 
@@ -152,8 +173,6 @@ namespace fyreactor
 		LPOVERLAPPED overlapped = NULL;
 
 		{
-			socket_t newSock = -1;
-
 			while (m_bRun)
 			{
 				bool ret = GetQueuedCompletionStatus(m_iHandle, &count_bytes, &completion_key, &overlapped, timeout < 0 ? INFINITE : timeout);
@@ -176,12 +195,12 @@ namespace fyreactor
 				{
 				case IO_TYPE::HANDLE_ACCEPT:
 				{					
-					if (m_iNewSockId != -1)
+					if (m_iNewSockId != 0)
 					{
 						//֪ͨtcpserver
 						m_pServer->OnAccept(m_iNewSockId);
 					}
-					DoAccept();
+					CtlEvent(m_iListenId, EVENT_OPEN);
 					break;
 				}
 				case IO_TYPE::HANDLE_RECV:
@@ -193,7 +212,7 @@ namespace fyreactor
 						else if (m_pClient != NULL)
 							m_pClient->OnMessage(io_data->socket, io_data->buf.buf, io_data->bytes);
 
-						Recv(io_data->socket);
+						CtlEvent(io_data->socket, EVENT_READ);
 					}
 					else
 					{
@@ -244,7 +263,7 @@ namespace fyreactor
 
 	bool CReactor_Iocp::InitSocket(socket_t sock)
 	{
-		if (sock == -1)
+		if (sock == 0)
 		{
 			return false;
 		}
@@ -273,7 +292,7 @@ namespace fyreactor
 	void CReactor_Iocp::DoAccept()
 	{
 		socket_t sockId = CreateNewSocket();
-		if (sockId == -1)
+		if (sockId == 0)
 			return;
 
 		if (InitSocket(sockId) == false)
@@ -314,7 +333,7 @@ namespace fyreactor
 		addr.sin_port = htons(port);
 
 		socket_t listen_socket = CreateNewSocket();
-		if (listen_socket == -1)
+		if (listen_socket == 0)
 			return false;
 
 		if (InitSocket(listen_socket) == false)
@@ -333,7 +352,8 @@ namespace fyreactor
 		}
 
 		m_iListenId = listen_socket;
-		AddEvent(m_iListenId, EVENT_OPEN);
+		if (!AddEvent(m_iListenId, EVENT_OPEN))
+			return false;
 
 		return true;
 	}
@@ -347,7 +367,7 @@ namespace fyreactor
 
 		socket_t sockId = CreateNewSocket();
 		if (!InitSocket(sockId))
-			return -1;
+			return 0;
 
 		int retryNum = 3;
 		do

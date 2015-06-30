@@ -110,10 +110,14 @@ namespace fyreactor
 			if (sockId != -1)
 			{
 #ifdef HAVE_EPOLL
-				m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
-				m_aTreadReactor[1].m_pReactor->AddEvent(sockId, 0);
+				if (!m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ))
+					return -1;
+
+				if (!m_aTreadReactor[1].m_pReactor->AddEvent(sockId, 0))
+					return -1;
 #elif defined HAVE_IOCP
-				m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
+				if (!m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ))
+					return -1;
 #endif
 			}
 

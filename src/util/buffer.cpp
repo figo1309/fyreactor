@@ -7,7 +7,6 @@ discribe:		¼òµ¥»º³åÇø
 /************************************************************************/
 
 #include <util/buffer.h>
-#include <math.h>
 
 namespace fyreactor
 {
@@ -52,7 +51,7 @@ namespace fyreactor
 		}
 
 
-		return m_iLen;
+		return (int32_t)m_iLen;
 	}
 
 	const char* CBuffer::PopBuf(uint32_t& len)
@@ -62,13 +61,26 @@ namespace fyreactor
 		return m_pBuf;
 	}
 
-	uint32_t CBuffer::NextPowerOf2(uint32_t n)
+	uint32_t CBuffer::NextPowerOf2(uint32_t n) const
 	{
-		double dLog2 = log2(n);
+		/*double dLog2 = log2(n);
 		uint32_t iLog2 = (uint32_t)dLog2 + 1;
 		uint32_t ret = exp2(iLog2);
 
-		return ret;
+		return ret;*/
+
+		if (n < INIT_BUFFER_SIZE)
+			return INIT_BUFFER_SIZE;
+		if (n < 2048)
+			return 2048;
+		if (n < 4096)
+			return 4096;
+		if (n < 8192)
+			return 8192;
+		if (n < 16384)
+			return 16384;
+		
+		return MAX_MESSAGE_LEGNTH;
 	}
 }
 

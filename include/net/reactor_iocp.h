@@ -21,7 +21,7 @@ namespace fyreactor
 	class CTCPServer;
 	class CTCPClient;
 
-	class CReactor_Iocp:public CReactor
+	class CReactor_Iocp:public CReactor, public nocopyable
 	{
 	public:
 		CReactor_Iocp(CTCPServer* server);

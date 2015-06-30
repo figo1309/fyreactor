@@ -88,7 +88,7 @@ typedef unsigned int		uint32_t;
 typedef unsigned long		ulong_t;
 typedef long				long_t;
 
-namespace qing
+namespace fyreactor
 {
 	class nocopyable
 	{

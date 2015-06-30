@@ -15,7 +15,7 @@ discribe:		¼òµ¥»º³åÇø
 
 namespace fyreactor
 {
-	class CBuffer
+	class CBuffer :public nocopyable
 	{
 	public:
 		CBuffer();
@@ -25,7 +25,7 @@ namespace fyreactor
 		const char* PopBuf(uint32_t& len);
 
 	private:
-		uint32_t NextPowerOf2(uint32_t n);
+		uint32_t NextPowerOf2(uint32_t n) const;
 		
 	private:
 		char*				m_pBuf;

@@ -21,7 +21,7 @@ namespace fyreactor
 	class CTCPServer;
 	class CTCPClient;
 
-	class CReactor_Epoll:public CReactor
+	class CReactor_Epoll:public CReactor, public nocopyable
 	{
 	public:
 		CReactor_Epoll(CTCPServer* server, EReactorType type, handle_t handle, \
@@ -46,13 +46,15 @@ namespace fyreactor
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void OnClose(socket_t sockId);
 
-	protected:	
+	private:	
 		socket_t DoAccept();
 		int Recv(socket_t sockId, char* buf);
 		int Send(socket_t sockId, const char* message, uint32_t len);
 
-	private:
-		void LoopThread(int32 timeout);
+		void LoopAccept(int32 timeout);
+		void LoopRead(int32 timeout);
+		void LoopWrite(int32 timeout);
+
 		uint32_t ConvertEventMask(uint32_t e);
 		socket_t CreateNewSocket();
 		bool	InitSocket(socket_t sockId);
