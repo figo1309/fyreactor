@@ -22,15 +22,15 @@ discribe:		响应器群头文件
 
 namespace fyreactor
 {
-	class CTCPServer;
-	class CTCPClient;
+	class CTCPServerImpl;
+	class CTCPClientImpl;
 
-	class CReactorGroup
+	class CReactorGroup : public nocopyable
 	{
 	public:
-		CReactorGroup(CTCPServer *server);
-		CReactorGroup(CTCPClient *client);
-		~CReactorGroup();
+		CReactorGroup(CTCPServerImpl *server);
+		CReactorGroup(CTCPClientImpl *client);
+		virtual ~CReactorGroup();
 
 		void StartListen(const std::string& ip, int port);
 		socket_t Connect(const std::string& ip, int port);

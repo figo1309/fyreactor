@@ -36,11 +36,11 @@ namespace fyreactor
 	};
 
 	//定时器管理
-	class CTimerThread
+	class CTimerThread : public nocopyable
 	{
 	public:
 		CTimerThread(std::recursive_mutex* mutex = NULL);
-		~CTimerThread();
+		virtual ~CTimerThread();
 
 		// interval_time: s
 		uint64 Register(bool run_once, int interval_time, std::function<void()> fp);

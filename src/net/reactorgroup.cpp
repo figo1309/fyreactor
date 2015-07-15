@@ -5,7 +5,7 @@ athor:			葛飞跃
 discribe:		响应器群实现
 */
 /************************************************************************/
-#include <net/tcpserver.h>
+#include <net/tcpserver_impl.h>
 #include <net/reactorgroup.h>
 #include <net/reactor_epoll.h>
 #include <net/reactor_iocp.h>
@@ -13,7 +13,7 @@ discribe:		响应器群实现
 namespace fyreactor
 {
 
-	CReactorGroup::CReactorGroup(CTCPServer *server)
+	CReactorGroup::CReactorGroup(CTCPServerImpl *server)
 		: m_bServerOrClient(true)
 		, m_iReactorNum(SERVER_REACTOR_NUM)
 	{
@@ -48,7 +48,7 @@ namespace fyreactor
 #endif
 	}
 
-	CReactorGroup::CReactorGroup(CTCPClient *client)
+	CReactorGroup::CReactorGroup(CTCPClientImpl *client)
 		: m_bServerOrClient(false)
 		, m_iReactorNum(CLIENT_REACTOR_NUM)
 	{

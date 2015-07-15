@@ -18,18 +18,18 @@ discribe:		epoll响应器头文件
 
 namespace fyreactor
 {
-	class CTCPServer;
-	class CTCPClient;
+	class CTCPServerImpl;
+	class CTCPClientImpl;
 
-	class CReactor_Epoll:public CReactor, public nocopyable
+	class CReactor_Epoll:public CReactor
 	{
 	public:
-		CReactor_Epoll(CTCPServer* server, EReactorType type, handle_t handle, \
+		CReactor_Epoll(CTCPServerImpl* server, EReactorType type, handle_t handle, \
 			std::mutex& mutexSendBuf, \
 			std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
 			std::mutex&	mutexEpoll);
 
-		CReactor_Epoll(CTCPClient* client, EReactorType type, handle_t handle, \
+		CReactor_Epoll(CTCPClientImpl* client, EReactorType type, handle_t handle, \
 			std::mutex& mutexSendBuf, \
 			std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
 			std::mutex&	mutexEpoll);
@@ -60,8 +60,8 @@ namespace fyreactor
 		bool	InitSocket(socket_t sockId);
 
 	private:
-		CTCPServer*							m_pServer;
-		CTCPClient*							m_pClient;
+		CTCPServerImpl*						m_pServer;
+		CTCPClientImpl*						m_pClient;
 		handle_t							m_iHandle;
 		struct epoll_event					m_aEvents[MAX_EVENT_SIZE];
 		bool								m_bRun;

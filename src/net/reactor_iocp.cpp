@@ -7,15 +7,15 @@ discribe:		iocpœÏ”¶∆˜ µœ÷
 /************************************************************************/
 #include <util/profile_test.h>
 #include <net/define.hpp>
-#include <net/tcpserver.h>
-#include <net/tcpclient.h>
+#include <net/tcpserver_impl.h>
+#include <net/tcpclient_impl.h>
 #include <net/reactor_iocp.h>
 
 #ifdef HAVE_IOCP
 
 namespace fyreactor
 {
-	CReactor_Iocp::CReactor_Iocp(CTCPServer* server)
+	CReactor_Iocp::CReactor_Iocp(CTCPServerImpl* server)
 		: m_pServer (server)
 		, m_pClient(NULL)
 		, m_bRun(false)
@@ -41,7 +41,7 @@ namespace fyreactor
 		m_acceptIoData.buf.len = MAX_MESSAGE_LEGNTH;
 	}
 
-	CReactor_Iocp::CReactor_Iocp(CTCPClient* client)
+	CReactor_Iocp::CReactor_Iocp(CTCPClientImpl* client)
 		: m_pServer (NULL)
 		, m_pClient(client)
 		, m_bRun(false)

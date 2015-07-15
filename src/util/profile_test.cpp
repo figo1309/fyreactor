@@ -22,10 +22,9 @@ namespace fyreactor
 	CProfileTest::~CProfileTest()
 	{
 		uint32_t lastTime = CTimerThread::GetMilSec() - m_iBeginTime;
-		if (lastTime > 5)
+		if (lastTime > 10)
 			printf("1111 %s  %d \n", m_strMsg.c_str(), lastTime);
 	}
 
 
 }
-

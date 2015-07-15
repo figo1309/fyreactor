@@ -18,14 +18,14 @@ discribe:		iocp响应器头文件
 
 namespace fyreactor
 {
-	class CTCPServer;
-	class CTCPClient;
+	class CTCPServerImpl;
+	class CTCPClientImpl;
 
-	class CReactor_Iocp:public CReactor, public nocopyable
+	class CReactor_Iocp:public CReactor
 	{
 	public:
-		CReactor_Iocp(CTCPServer* server);
-		CReactor_Iocp(CTCPClient* client);
+		CReactor_Iocp(CTCPServerImpl* server);
+		CReactor_Iocp(CTCPClientImpl* client);
 		virtual ~CReactor_Iocp();
 
 		bool Listen(const std::string& ip, int port);
@@ -49,8 +49,8 @@ namespace fyreactor
 		bool	InitSocket(socket_t sockId);
 
 	private:
-		CTCPServer*							m_pServer;
-		CTCPClient*							m_pClient;
+		CTCPServerImpl*						m_pServer;
+		CTCPClientImpl*						m_pClient;
 		handle_t							m_iHandle;
 		bool								m_bRun;
 		socket_t							m_iListenId;

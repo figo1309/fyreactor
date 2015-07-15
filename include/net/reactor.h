@@ -21,7 +21,7 @@ enum EReactorType
 namespace fyreactor
 {
 
-	class CReactor
+	class CReactor : public nocopyable
 	{
 	public:
 		CReactor(){}

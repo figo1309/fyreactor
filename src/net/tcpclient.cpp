@@ -6,91 +6,58 @@ discribe:		tcp客户端实现
 */
 /************************************************************************/
 #include <net/tcpclient.h>
+#include <net/tcpclient_impl.h>
 
 namespace fyreactor
 {
 	CTCPClient::CTCPClient(std::recursive_mutex* mutex)
-		: m_outMutex(mutex)
-		, m_timerThread(mutex)
-		, m_messageFunc(nullptr)
-		, m_closeFunc(nullptr)
-		, m_reactorGroup(this)
 	{
-
+		m_pTCPClientImpl = new CTCPClientImpl(mutex);
 	}
 
 	CTCPClient::~CTCPClient()
 	{
+		delete m_pTCPClientImpl;
 	}
 
 	socket_t CTCPClient::Connect(const std::string& ip, int port)
 	{
-		socket_t newSock = m_reactorGroup.Connect(ip, port);
-		if (newSock != -1)
-		{
-			m_setSocket.insert(newSock);
-		}
-
-		return newSock;
+		return m_pTCPClientImpl->Connect(ip, port);
 	}
 
 	void CTCPClient::Run()
 	{
-		m_timerThread.Run();
-
-		m_reactorGroup.Run();
-	}
-
-	void CTCPClient::OnMessage(socket_t sockId, const char* message, uint32_t len)
-	{
-		if (m_messageFunc != nullptr)
-		{
-			if (m_outMutex != NULL)
-			{
-				std::lock_guard<std::recursive_mutex> lock(*m_outMutex);
-				m_messageFunc(sockId, message, len);
-			}
-			else
-			{
-				m_messageFunc(sockId, message, len);
-			}
-		}
+		m_pTCPClientImpl->Run();
 	}
 
 	void CTCPClient::ReadySendMessage(socket_t sockId, const char* message, uint32_t len)
 	{
-		m_reactorGroup.ReadySendMessage(sockId, message, len);
+		m_pTCPClientImpl->ReadySendMessage(sockId, message, len);
 	}
 
 	void CTCPClient::Stop()
 	{
-		m_reactorGroup.Stop();
-
-		m_timerThread.Stop();
+		m_pTCPClientImpl->Stop();
 	}
 
 	void CTCPClient::Close(socket_t sockId)
 	{
-#ifdef HAVE_EPOLL
-		::close(sockId);
-#endif
+		m_pTCPClientImpl->Close(sockId);
 	}
 
-	void CTCPClient::OnClose(socket_t sockId)
+	CTimerThread& CTCPClient::GetTimerThread()
 	{
-		m_setSocket.erase(sockId);
-		if (m_closeFunc != nullptr)
-		{			
-			if (m_outMutex != NULL)
-			{
-				std::lock_guard<std::recursive_mutex> lock(*m_outMutex);
-				m_closeFunc(sockId);
-			}
-			else
-			{
-				m_closeFunc(sockId);
-			}
-		}
+		return m_pTCPClientImpl->GetTimerThread();
+	}
+
+	void CTCPClient::RegMessageFunc(MessageFunc func)
+	{
+		m_pTCPClientImpl->RegMessageFunc(func);
+	}
+
+	void CTCPClient::RegCloseFunc(CloseFunc func)
+	{
+		m_pTCPClientImpl->RegCloseFunc(func);
 	}
 }
 

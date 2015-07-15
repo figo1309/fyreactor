@@ -6,8 +6,8 @@ discribe:		epoll响应器实现
 */
 /************************************************************************/
 #include <util/profile_test.h>
-#include <net/tcpserver.h>
-#include <net/tcpclient.h>
+#include <net/tcpserver_impl.h>
+#include <net/tcpclient_impl.h>
 #include <net/reactor_epoll.h>
 
 #ifdef HAVE_EPOLL
@@ -18,7 +18,7 @@ discribe:		epoll响应器实现
 
 namespace fyreactor
 {
-	CReactor_Epoll::CReactor_Epoll(CTCPServer* server, EReactorType type, handle_t handle, \
+	CReactor_Epoll::CReactor_Epoll(CTCPServerImpl* server, EReactorType type, handle_t handle, \
 		std::mutex& mutexSendBuf, \
 		std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
 		std::mutex&	mutexEpoll)
@@ -34,7 +34,7 @@ namespace fyreactor
 	{
 	}
 
-	CReactor_Epoll::CReactor_Epoll(CTCPClient* client, EReactorType type, handle_t handle, \
+	CReactor_Epoll::CReactor_Epoll(CTCPClientImpl* client, EReactorType type, handle_t handle, \
 		std::mutex& mutexSendBuf, \
 		std::unordered_map<socket_t, CBuffer>&	mapSendBuf, \
 		std::mutex&	mutexEpoll)
@@ -437,6 +437,8 @@ namespace fyreactor
 			return false;
 		}
 
+		//listen的第二个参数即backlog,测试发现数值+1代表呼入连接请求队列长度，即目前队列长度为9
+		//参见tcp/ip协议 18.11.4
 		if (::listen(listen_socket, 8) == -1)
 		{
 			printf("socket listen faild, errno %d.", errno);

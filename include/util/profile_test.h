@@ -13,11 +13,11 @@ discribe:		–‘ƒ‹≤‚ ‘
 
 namespace fyreactor
 {
-	class CProfileTest
+	class CProfileTest : public nocopyable
 	{
 	public:
 		CProfileTest(const std::string& msg);
-		~CProfileTest();
+		virtual ~CProfileTest();
 
 	private:
 		uint32_t	m_iBeginTime;

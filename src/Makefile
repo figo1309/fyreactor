@@ -136,6 +136,30 @@ net/reactor_epoll.cpp.s:
 	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/reactor_epoll.cpp.s
 .PHONY : net/reactor_epoll.cpp.s
 
+net/reactor_iocp.o: net/reactor_iocp.cpp.o
+.PHONY : net/reactor_iocp.o
+
+# target to build an object file
+net/reactor_iocp.cpp.o:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/reactor_iocp.cpp.o
+.PHONY : net/reactor_iocp.cpp.o
+
+net/reactor_iocp.i: net/reactor_iocp.cpp.i
+.PHONY : net/reactor_iocp.i
+
+# target to preprocess a source file
+net/reactor_iocp.cpp.i:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/reactor_iocp.cpp.i
+.PHONY : net/reactor_iocp.cpp.i
+
+net/reactor_iocp.s: net/reactor_iocp.cpp.s
+.PHONY : net/reactor_iocp.s
+
+# target to generate assembly for a file
+net/reactor_iocp.cpp.s:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/reactor_iocp.cpp.s
+.PHONY : net/reactor_iocp.cpp.s
+
 net/reactorgroup.o: net/reactorgroup.cpp.o
 .PHONY : net/reactorgroup.o
 
@@ -184,6 +208,30 @@ net/tcpclient.cpp.s:
 	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpclient.cpp.s
 .PHONY : net/tcpclient.cpp.s
 
+net/tcpclient_impl.o: net/tcpclient_impl.cpp.o
+.PHONY : net/tcpclient_impl.o
+
+# target to build an object file
+net/tcpclient_impl.cpp.o:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpclient_impl.cpp.o
+.PHONY : net/tcpclient_impl.cpp.o
+
+net/tcpclient_impl.i: net/tcpclient_impl.cpp.i
+.PHONY : net/tcpclient_impl.i
+
+# target to preprocess a source file
+net/tcpclient_impl.cpp.i:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpclient_impl.cpp.i
+.PHONY : net/tcpclient_impl.cpp.i
+
+net/tcpclient_impl.s: net/tcpclient_impl.cpp.s
+.PHONY : net/tcpclient_impl.s
+
+# target to generate assembly for a file
+net/tcpclient_impl.cpp.s:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpclient_impl.cpp.s
+.PHONY : net/tcpclient_impl.cpp.s
+
 net/tcpserver.o: net/tcpserver.cpp.o
 .PHONY : net/tcpserver.o
 
@@ -207,6 +255,30 @@ net/tcpserver.s: net/tcpserver.cpp.s
 net/tcpserver.cpp.s:
 	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpserver.cpp.s
 .PHONY : net/tcpserver.cpp.s
+
+net/tcpserver_impl.o: net/tcpserver_impl.cpp.o
+.PHONY : net/tcpserver_impl.o
+
+# target to build an object file
+net/tcpserver_impl.cpp.o:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpserver_impl.cpp.o
+.PHONY : net/tcpserver_impl.cpp.o
+
+net/tcpserver_impl.i: net/tcpserver_impl.cpp.i
+.PHONY : net/tcpserver_impl.i
+
+# target to preprocess a source file
+net/tcpserver_impl.cpp.i:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpserver_impl.cpp.i
+.PHONY : net/tcpserver_impl.cpp.i
+
+net/tcpserver_impl.s: net/tcpserver_impl.cpp.s
+.PHONY : net/tcpserver_impl.s
+
+# target to generate assembly for a file
+net/tcpserver_impl.cpp.s:
+	cd /mnt/hgfs/shoot1/fyreactor && $(MAKE) -f src/CMakeFiles/fyreactor.dir/build.make src/CMakeFiles/fyreactor.dir/net/tcpserver_impl.cpp.s
+.PHONY : net/tcpserver_impl.cpp.s
 
 util/buffer.o: util/buffer.cpp.o
 .PHONY : util/buffer.o
@@ -580,15 +652,24 @@ help:
 	@echo "... net/reactor_epoll.o"
 	@echo "... net/reactor_epoll.i"
 	@echo "... net/reactor_epoll.s"
+	@echo "... net/reactor_iocp.o"
+	@echo "... net/reactor_iocp.i"
+	@echo "... net/reactor_iocp.s"
 	@echo "... net/reactorgroup.o"
 	@echo "... net/reactorgroup.i"
 	@echo "... net/reactorgroup.s"
 	@echo "... net/tcpclient.o"
 	@echo "... net/tcpclient.i"
 	@echo "... net/tcpclient.s"
+	@echo "... net/tcpclient_impl.o"
+	@echo "... net/tcpclient_impl.i"
+	@echo "... net/tcpclient_impl.s"
 	@echo "... net/tcpserver.o"
 	@echo "... net/tcpserver.i"
 	@echo "... net/tcpserver.s"
+	@echo "... net/tcpserver_impl.o"
+	@echo "... net/tcpserver_impl.i"
+	@echo "... net/tcpserver_impl.s"
 	@echo "... util/buffer.o"
 	@echo "... util/buffer.i"
 	@echo "... util/buffer.s"
