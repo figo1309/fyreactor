@@ -73,6 +73,8 @@ namespace fyreactor
 	{
 #ifdef HAVE_EPOLL
 		::close(sockId);
+#elif defined HAVE_IOCP
+		::closesocket(sockId);
 #endif
 	}
 

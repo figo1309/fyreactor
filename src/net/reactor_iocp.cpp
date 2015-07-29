@@ -249,14 +249,7 @@ namespace fyreactor
 
 	socket_t CReactor_Iocp::CreateNewSocket()
 	{
-		socket_t sock = 0;
-#ifdef HAVE_IOCP
-		sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
-#elif defined(HAVE_EPOLL)
-		sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-#elif defined(HAVE_KQUEUE)
-		sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-#endif
+		socket_t sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
 		return sock;
 	}
