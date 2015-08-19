@@ -105,17 +105,18 @@ namespace fyreactor
 			//mark1：这里锁的用法
 			std::unique_lock<std::recursive_mutex>	lock(m_mutexTimer);
 
-			for (auto iter = m_mapOrderedTimers.begin(); iter != m_mapOrderedTimers.end();)
+			auto iterTimer = m_mapOrderedTimers.begin();
+			for (; iterTimer != m_mapOrderedTimers.end();)
 			{
-				if (iter->second->m_bDeleted == true)
+				if (iterTimer->second->m_bDeleted == true)
 				{
-					m_mapTimers.erase(iter->second->m_iId);
-					iter = m_mapOrderedTimers.erase(iter);
+					m_mapTimers.erase(iterTimer->second->m_iId);
+					iterTimer = m_mapOrderedTimers.erase(iterTimer);
 				}
 				else
 				{
-					nextTime = iter->second->m_iNextTime;
-					firstTimer = iter->second;
+					nextTime = iterTimer->second->m_iNextTime;
+					firstTimer = iterTimer->second;
 					break;
 				}
 			}
@@ -155,8 +156,8 @@ namespace fyreactor
 					{
 						firstTimer->m_iNextTime = nowTime + firstTimer->m_iInterval;
 
-						m_mapOrderedTimers.erase(nextTime);						
-						m_mapOrderedTimers.insert(std::make_pair(firstTimer->m_iNextTime, firstTimer));				
+						m_mapOrderedTimers.erase(iterTimer);
+						m_mapOrderedTimers.insert(std::make_pair(firstTimer->m_iNextTime, firstTimer));
 					}
 
 					//mark1：退出锁的生命周期，解锁
