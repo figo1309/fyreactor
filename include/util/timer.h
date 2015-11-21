@@ -26,7 +26,7 @@ namespace fyreactor
 		uint64 m_iStartTime;
 		bool m_bOnce;
 		bool m_bDeleted = false;
-		std::function<void()> m_pFunc;
+		std::function<void(long)> m_pFunc;
 
 
 		bool operator < (STimer timer)
@@ -43,9 +43,9 @@ namespace fyreactor
 		virtual ~CTimerThread();
 
 		// interval_time: s
-		uint64 Register(bool run_once, int interval_time, std::function<void()> fp);
+		uint64 Register(bool run_once, int interval_time, std::function<void(long)> fp);
 		// interval_time: ms
-		uint64 RegisterByMilSec(bool run_once, int interval_time, std::function<void()> fp);
+		uint64 RegisterByMilSec(bool run_once, int interval_time, std::function<void(long)> fp);
 
 		void UnRegister(uint64 timer_id);
 		void Run();

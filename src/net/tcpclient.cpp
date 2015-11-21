@@ -45,11 +45,6 @@ namespace fyreactor
 		m_pTCPClientImpl->Close(sockId);
 	}
 
-	CTimerThread& CTCPClient::GetTimerThread()
-	{
-		return m_pTCPClientImpl->GetTimerThread();
-	}
-
 	void CTCPClient::RegMessageFunc(MessageFunc func)
 	{
 		m_pTCPClientImpl->RegMessageFunc(func);

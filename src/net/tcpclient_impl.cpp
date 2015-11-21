@@ -11,7 +11,6 @@ namespace fyreactor
 {
 	CTCPClientImpl::CTCPClientImpl(std::recursive_mutex* mutex)
 		: m_outMutex(mutex)
-		, m_timerThread(mutex)
 		, m_messageFunc(nullptr)
 		, m_closeFunc(nullptr)
 		, m_reactorGroup(this)
@@ -36,8 +35,6 @@ namespace fyreactor
 
 	void CTCPClientImpl::Run()
 	{
-		m_timerThread.Run();
-
 		m_reactorGroup.Run();
 	}
 
@@ -65,8 +62,6 @@ namespace fyreactor
 	void CTCPClientImpl::Stop()
 	{
 		m_reactorGroup.Stop();
-
-		m_timerThread.Stop();
 	}
 
 	void CTCPClientImpl::Close(socket_t sockId)

@@ -131,12 +131,17 @@ namespace fyreactor
 			{
 				if (m_aEvents[i].data.fd == m_iListenId)
 				{
-					newSock = DoAccept();
-					if (newSock != -1)
+					do
 					{
-						//通知tcpserver
-						m_pServer->OnAccept(newSock);
-					}
+						newSock = DoAccept();
+						if (newSock != -1)
+						{
+							//通知tcpserver
+							m_pServer->OnAccept(newSock);
+						}
+						else
+							break;
+					}while(true);
 
 					//CtlEvent(m_iListenId, EVENT_READ);
 				}
@@ -246,19 +251,19 @@ namespace fyreactor
 						msg = m_mapSendBuf[sockId].PopBuf(len);
 						memcpy (buf1, msg, len);
 					}
-
+					if (len > 0)
+					{
+						sendLen = Send(sockId, buf1, len);
+						if (sendLen < 0)
 						{
-							sendLen = Send(sockId, buf1, len);
-							if (sendLen < 0)
-							{
-								if (m_pServer != NULL)
-									m_pServer->OnClose(sockId);
-								else if (m_pClient != NULL)
-									m_pClient->OnClose(sockId);
+							if (m_pServer != NULL)
+								m_pServer->OnClose(sockId);
+							else if (m_pClient != NULL)
+								m_pClient->OnClose(sockId);
 
-								break;
-							}
+							break;
 						}
+					}
 				}					
 			}
 		}
@@ -294,7 +299,7 @@ namespace fyreactor
 		switch (e)
 		{
 		case EVENT_READ:
-			op = EPOLLIN | EPOLLET;
+			op = EPOLLIN;
 			break;
 		case EVENT_WRITE:
 			op = EPOLLOUT | EPOLLONESHOT | EPOLLET;
@@ -317,12 +322,19 @@ namespace fyreactor
 				std::unique_lock<std::mutex> lock(m_mutexSendBuf);
 				res = m_mapSendBuf[sockId].AddBuf(message, len);
 			}
-			if (res == (int32_t)len)
+
+			if (!CtlEvent (sockId, EVENT_WRITE))
 			{
-				CtlEvent (sockId, EVENT_WRITE);
-				return;
+				//if (errno == ENOENT)
+				{
+					//此时表明socket已经关闭，并且执行了DelEvent
+					std::unique_lock<std::mutex> lock(m_mutexSendBuf);
+					m_mapSendBuf.erase(sockId);
+					return;
+				}
 			}
-			else if (res == -1)
+
+			if (res == -1)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(3));
 			}
@@ -380,6 +392,17 @@ namespace fyreactor
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&sendMax, sizeof(sendMax)) == -1)
 		{
 			return false;
+		}
+
+		{
+			int keepalive = 1; // 开启keepalive属性
+			int keepidle = 60; // 如该连接在60秒内没有任何数据往来,则进行探测
+			int keepinterval = 5; // 探测时发包的时间间隔为5 秒
+			int keepcount = 3; // 探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
+			setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive ));
+			setsockopt(sock, SOL_TCP, TCP_KEEPIDLE, (void*)&keepidle , sizeof(keepidle ));
+			setsockopt(sock, SOL_TCP, TCP_KEEPINTVL, (void *)&keepinterval , sizeof(keepinterval ));
+			setsockopt(sock, SOL_TCP, TCP_KEEPCNT, (void *)&keepcount , sizeof(keepcount ));
 		}
 
 		int flags = fcntl(sock, F_GETFL, 0);
@@ -467,10 +490,12 @@ namespace fyreactor
 		do
 		{
 			if (::connect(sockId, (sockaddr*)&addr, sizeof(sockaddr)) != SOCKET_ERROR)
-				break;
+			{
+				return sockId;
+			}
 		}while(--retryNum >= 0);
 		
-		return sockId;
+		return -1;
 	}
 
 	int CReactor_Epoll::Recv(socket_t sockId, char* buf)

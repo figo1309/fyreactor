@@ -19,7 +19,10 @@ namespace fyreactor
 	{
 	public:
 		CBuffer();
+		CBuffer(const CBuffer&buffer);
 		virtual ~CBuffer();
+
+		CBuffer& operator =(const CBuffer& buffer);
 
 		int32_t AddBuf(const char* msg, uint32_t len);
 		const char* PopBuf(uint32_t& len);

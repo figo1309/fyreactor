@@ -18,6 +18,15 @@ namespace fyreactor
 	{
 	}
 
+	CBuffer::CBuffer(const CBuffer&buffer)
+	{
+		m_iSize = buffer.m_iSize;
+		m_iLen = buffer.m_iLen;
+		m_pBuf = new char[m_iSize];
+
+		memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
+	}
+
 	CBuffer::~CBuffer()
 	{
 		if (m_pBuf != NULL)
@@ -25,6 +34,17 @@ namespace fyreactor
 			delete[]m_pBuf;
 			m_pBuf = NULL;
 		}
+	}
+
+	CBuffer& CBuffer::operator =(const CBuffer& buffer)
+	{
+		m_iSize = buffer.m_iSize;
+		m_iLen = buffer.m_iLen;
+		m_pBuf = new char[m_iSize];
+
+		memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
+
+		return *this;
 	}
 
 	int32_t CBuffer::AddBuf(const char* msg, uint32_t len)

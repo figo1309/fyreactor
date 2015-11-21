@@ -175,6 +175,13 @@ namespace fyreactor
 
 	void CReactorGroup::OnClose(socket_t sockId)
 	{
+#ifdef HAVE_EPOLL
+		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
+		m_aTreadReactor[1].m_pReactor->DelEvent(sockId);
+#elif defined HAVE_IOCP
+		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
+#endif
+
 		for (int i = 0; i < m_iReactorNum; ++i)
 		{
 			m_aTreadReactor[i].m_pReactor->OnClose(sockId);

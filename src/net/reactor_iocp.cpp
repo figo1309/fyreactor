@@ -366,11 +366,11 @@ namespace fyreactor
 		do
 		{
 			if (::connect(sockId, (sockaddr*)&addr, sizeof(sockaddr)) != SOCKET_ERROR)
-				break;
+				return sockId;
 		}while(--retryNum >= 0);
 		
 		//AddEvent(sockId, EVENT_READ);
-		return sockId;
+		return -1;
 	}
 
 	bool CReactor_Iocp::Recv(socket_t sockId)

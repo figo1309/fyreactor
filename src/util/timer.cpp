@@ -34,7 +34,7 @@ namespace fyreactor
 		}
 	}
 
-	uint64 CTimerThread::Register(bool run_once, int interval_time, std::function<void()> fp)
+	uint64 CTimerThread::Register(bool run_once, int interval_time, std::function<void(long)> fp)
 	{
 		std::shared_ptr<STimer> newTimer = std::make_shared<STimer>();
 		newTimer->m_iId = ++m_iCurretId;
@@ -55,7 +55,7 @@ namespace fyreactor
 		return newTimer->m_iId;
 	}
 
-	uint64 CTimerThread::RegisterByMilSec(bool run_once, int interval_time, std::function<void()> fp)
+	uint64 CTimerThread::RegisterByMilSec(bool run_once, int interval_time, std::function<void(long)> fp)
 	{
 		std::shared_ptr<STimer> newTimer = std::make_shared<STimer>();
 		newTimer->m_iId = ++m_iCurretId;
@@ -142,11 +142,11 @@ namespace fyreactor
 						std::unique_lock<std::recursive_mutex> lock1(*m_outMutex);
 						lock.lock();
 						if (!firstTimer->m_bDeleted)
-							firstTimer->m_pFunc();						
+							firstTimer->m_pFunc(nowTime);
 					}
 					else
 					{
-						firstTimer->m_pFunc();
+						firstTimer->m_pFunc(nowTime);
 					}
 
 					//3.2一次性定时器则标记删除，非一次性定时器重新加入方便排序

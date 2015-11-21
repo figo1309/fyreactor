@@ -29,7 +29,6 @@ namespace fyreactor
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void Stop();
 		void Close(socket_t sockId);
-		CTimerThread& GetTimerThread(){ return m_timerThread; }
 
 		void RegMessageFunc(MessageFunc func){ m_messageFunc = func; }
 		void RegCloseFunc(CloseFunc func){ m_closeFunc = func; }
@@ -42,7 +41,6 @@ namespace fyreactor
 	private:
 		std::recursive_mutex*			m_outMutex;
 		std::set<socket_t>				m_setSocket;
-		CTimerThread					m_timerThread;
 
 		MessageFunc						m_messageFunc;
 		CloseFunc						m_closeFunc;

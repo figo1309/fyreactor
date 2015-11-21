@@ -12,18 +12,19 @@ discribe:		tcp服务器头文件
 #include "define.hpp"
 #include "../util/timer.h"
 
-typedef std::function<void(socket_t)> AcceptFunc;
-typedef std::function<void(socket_t, const char* message, uint32_t len)> MessageFunc;
-typedef std::function<void(socket_t)> CloseFunc;
-
 namespace fyreactor
 {
+	class CTCPServer;
+	typedef std::function<void(CTCPServer*, int, socket_t)> AcceptFunc;
+	typedef std::function<void(socket_t, const char* message, uint32_t len)> MessageFunc;
+	typedef std::function<void(socket_t)> CloseFunc;
+
 	class CTCPServerImpl;
 
 	class CTCPServer : public nocopyable
 	{
 	public:
-		CTCPServer(std::recursive_mutex* mutex = NULL);
+		CTCPServer(int token, std::recursive_mutex* mutex = NULL);
 		virtual ~CTCPServer();
 
 		bool Listen(const std::string& ip, int port);
@@ -31,7 +32,6 @@ namespace fyreactor
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void Stop();
 		void Close(socket_t sockId);
-		CTimerThread& GetTimerThread();
 
 		void RegAcceptFunc(AcceptFunc func);
 		void RegMessageFunc(MessageFunc func);

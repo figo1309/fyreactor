@@ -31,7 +31,6 @@ namespace fyreactor
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void Stop();
 		void Close(socket_t sockId);
-		CTimerThread& GetTimerThread();
 
 		void RegMessageFunc(MessageFunc func);
 		void RegCloseFunc(CloseFunc func);

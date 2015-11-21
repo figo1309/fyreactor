@@ -21,7 +21,7 @@ namespace fyreactor
 	{
 	public:
 		//以下函数为面向使用者的调用接口
-		CTCPServerImpl(std::recursive_mutex* mutex = NULL);
+		CTCPServerImpl(CTCPServer* server, int token, std::recursive_mutex* mutex = NULL);
 		virtual ~CTCPServerImpl();
 
 		bool Listen(const std::string& ip, int port);
@@ -29,7 +29,6 @@ namespace fyreactor
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void Stop();
 		void Close(socket_t sockId);
-		CTimerThread& GetTimerThread(){ return m_timerThread; }
 
 		void RegAcceptFunc(AcceptFunc func){ m_acceptFunc = func; }
 		void RegMessageFunc(MessageFunc func){ m_messageFunc = func; }
@@ -42,16 +41,17 @@ namespace fyreactor
 		void OnClose(socket_t sockId);
 
 	private:
-		
+		CTCPServer*						m_server;
 		std::recursive_mutex*			m_outMutex;
 		CReactorGroup					m_reactorGroup;
 		std::recursive_mutex			m_socketMutex;
 		std::set<socket_t>				m_setSocket;
-		CTimerThread					m_timerThread;
 
 		AcceptFunc						m_acceptFunc;
 		MessageFunc						m_messageFunc;
 		CloseFunc						m_closeFunc;
+
+		int								m_token;
 
 	};
 }

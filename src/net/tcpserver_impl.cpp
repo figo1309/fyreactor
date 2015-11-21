@@ -9,10 +9,11 @@ discribe:		tcp服务器实现
 
 namespace fyreactor
 {
-	CTCPServerImpl::CTCPServerImpl(std::recursive_mutex* mutex)
-		: m_outMutex(mutex)
+	CTCPServerImpl::CTCPServerImpl(CTCPServer* server, int token, std::recursive_mutex* mutex)
+		: m_server(server)
+		, m_token(token)
+		, m_outMutex(mutex)
 		, m_reactorGroup(this)
-		, m_timerThread(mutex)
 		, m_acceptFunc(nullptr)
 		, m_messageFunc(nullptr)
 		, m_closeFunc(nullptr)		
@@ -31,7 +32,6 @@ namespace fyreactor
 
 	void CTCPServerImpl::Run()
 	{
-		m_timerThread.Run();
 		m_reactorGroup.Run();
 	}
 
@@ -52,11 +52,11 @@ namespace fyreactor
 				if (m_outMutex != NULL)
 				{
 					std::lock_guard<std::recursive_mutex> lock(*m_outMutex);
-					m_acceptFunc(sockId);
+					m_acceptFunc(m_server, m_token, sockId);
 				}
 				else
 				{
-					m_acceptFunc(sockId);
+					m_acceptFunc(m_server, m_token, sockId);
 				}
 
 			}
@@ -87,8 +87,6 @@ namespace fyreactor
 	void CTCPServerImpl::Stop()
 	{
 		m_reactorGroup.Stop();
-
-		m_timerThread.Stop();
 	}
 
 	void CTCPServerImpl::Close(socket_t sockId)
@@ -104,7 +102,11 @@ namespace fyreactor
 	{
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_socketMutex);
-			m_setSocket.erase(sockId);
+			auto findIter = m_setSocket.find(sockId);
+			if (findIter != m_setSocket.end())
+				m_setSocket.erase(sockId);
+			else
+				return;
 		}
 
 		m_reactorGroup.OnClose(sockId);

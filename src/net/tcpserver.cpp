@@ -10,9 +10,9 @@ discribe:		tcp服务器实现
 
 namespace fyreactor
 {
-	CTCPServer::CTCPServer(std::recursive_mutex* mutex)
+	CTCPServer::CTCPServer(int token, std::recursive_mutex* mutex)
 	{
-		m_pTCPServerImpl = new CTCPServerImpl(mutex);
+		m_pTCPServerImpl = new CTCPServerImpl(this, token, mutex);
 	}
 
 	CTCPServer::~CTCPServer()
@@ -44,11 +44,6 @@ namespace fyreactor
 	void CTCPServer::Close(socket_t sockId)
 	{
 		m_pTCPServerImpl->Close(sockId);
-	}
-
-	CTimerThread& CTCPServer::GetTimerThread()
-	{
-		return m_pTCPServerImpl->GetTimerThread();
 	}
 
 	void CTCPServer::RegAcceptFunc(AcceptFunc func)
