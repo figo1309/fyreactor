@@ -40,8 +40,12 @@ namespace fyreactor
 	{
 		m_iSize = buffer.m_iSize;
 		m_iLen = buffer.m_iLen;
-		m_pBuf = new char[m_iSize];
 
+		if (m_pBuf != NULL)
+		{
+			delete[]m_pBuf;
+		}
+		m_pBuf = new char[m_iSize];
 		memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
 
 		return *this;
@@ -99,6 +103,8 @@ namespace fyreactor
 			return 8192;
 		if (n < 16384)
 			return 16384;
+		if (n < 32768)
+			return 32768;
 		
 		return MAX_MESSAGE_LEGNTH;
 	}

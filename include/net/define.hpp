@@ -81,7 +81,7 @@
 #endif
 
 /* define some ... */
-#define MAX_MESSAGE_LEGNTH 20480
+#define MAX_MESSAGE_LEGNTH 40960
 #define MAX_SOCKET 65535
 #define MAX_EVENT_SIZE 256
 #define CLIENT_MAX_SEND_BUFFER_SIZE 1024*1024*10

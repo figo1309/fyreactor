@@ -93,7 +93,7 @@ namespace fyreactor
 		int result = epoll_ctl(m_iHandle, EPOLL_CTL_DEL, sockId, 0);
 		if(result < 0)
 		{
-			printf("epoll_ctl remove error %d", errno);
+			//printf("epoll_ctl remove error %d", errno);
 			return false;
 		}
 
@@ -158,48 +158,60 @@ namespace fyreactor
 		while (m_bRun)
 		{
 			{
-				std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				//std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				//m_mutexEpoll.lock();
 				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
-			}
 
-			if (result <  0)
-			{
-				if (errno == EINTR)
+				if (result <  0)
 				{
+					if (errno == EINTR)
+					{
+						//m_mutexEpoll.unlock();
+						continue;
+					}
+					else
+					{
+						printf("epoll_wait end,errno=%d", errno);
+						//m_mutexEpoll.unlock();
+						break;
+					}
+				}
+
+				if (result == 0)
+				{
+					//m_mutexEpoll.unlock();
 					continue;
 				}
-				else
-				{
-					printf("epoll_wait end,errno=%d", errno);
-					break;
-				}
-			}
 
-			if (result == 0)
-			{
-				continue;
-			}
-
-			for (int32_t i = 0; i<result; i++)
-			{
-				if (m_aEvents[i].events & EPOLLIN)
+				for (int32_t i = 0; i<result; i++)
 				{
-					readLen = Recv(m_aEvents[i].data.fd, buf1);
-					if (readLen > 0)
-					{							
-						if (m_pServer != NULL)
-							m_pServer->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
-						else if (m_pClient != NULL)
-							m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
-					}
-					else if (readLen == -1)
+					if (m_aEvents[i].events & EPOLLIN)
 					{
-						if (m_pServer != NULL)
-							m_pServer->OnClose(m_aEvents[i].data.fd);
-						else if (m_pClient != NULL)
-							m_pClient->OnClose(m_aEvents[i].data.fd);
-					}
-				}				
+						do {
+							readLen = Recv(m_aEvents[i].data.fd, buf1);
+
+							//m_mutexEpoll.unlock();
+							if (readLen > 0)
+							{							
+								if (m_pServer != NULL)
+									m_pServer->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
+								else if (m_pClient != NULL)
+									m_pClient->OnMessage(m_aEvents[i].data.fd, buf1, readLen);
+							}
+							else if (readLen == -1)
+							{
+								if (m_pServer != NULL)
+									m_pServer->OnClose(m_aEvents[i].data.fd);
+								else if (m_pClient != NULL)
+									m_pClient->OnClose(m_aEvents[i].data.fd);
+							}
+
+							//m_mutexEpoll.lock();
+						}while (readLen == MAX_MESSAGE_LEGNTH);
+					}				
+				}
+
+				//m_mutexEpoll.unlock();
 			}
 		}
 
@@ -218,7 +230,7 @@ namespace fyreactor
 		while (m_bRun)
 		{
 			{
-				std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				//std::unique_lock<std::mutex> lock (m_mutexEpoll);
 				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
 			}
 
@@ -298,8 +310,11 @@ namespace fyreactor
 
 		switch (e)
 		{
-		case EVENT_READ:
+		case EVENT_OPEN:
 			op = EPOLLIN;
+			break;
+		case EVENT_READ:
+			op = EPOLLIN | EPOLLET;
 			break;
 		case EVENT_WRITE:
 			op = EPOLLOUT | EPOLLONESHOT | EPOLLET;
@@ -314,7 +329,7 @@ namespace fyreactor
 	void CReactor_Epoll::ReadySendMessage(socket_t sockId, const char* message, uint32_t len)
 	{
 		int32_t res = -1;
-		int retryNum = 3;
+		int retryNum = 10;
 
 		do
 		{
@@ -469,7 +484,7 @@ namespace fyreactor
 		}
 
 		m_iListenId = listen_socket;
-		if (!AddEvent(m_iListenId, EVENT_READ))
+		if (!AddEvent(m_iListenId, EVENT_OPEN))
 			return false;
 
 		return true;
@@ -525,6 +540,9 @@ namespace fyreactor
 			}
 
 			hasRead += result;
+
+			if (hasRead == MAX_MESSAGE_LEGNTH)
+				break;
 		}
 
 		return hasRead;
