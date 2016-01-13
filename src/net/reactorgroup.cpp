@@ -23,9 +23,10 @@ namespace fyreactor
 		//1.最后一个reactor是接收连接reactor
 		//2.偶数reactor是读reactor
 		//3.奇数reactor是写reactor
-		handle_t listenHandle = epoll_create(MAX_EVENT_SIZE);		
-		
-		if (listenHandle == -1)
+		handle_t listenHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
+		if ((listenHandle == -1) || (readHandle == -1) || (writeHandle == -1))
 		{
 			printf("epoll_create() Error.");
 		}
@@ -34,12 +35,10 @@ namespace fyreactor
 		
 		for (int i = 0; i < m_iReactorNum - 1; i += 2)
 		{
-			handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
 			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(server, REACTOR_READ, readHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexReadEpoll);			
 		}
 		for (int i = 1; i < m_iReactorNum - 1; i += 2)
 		{
-			handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
 			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(server, REACTOR_WRITE, writeHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexWriteEpoll);
 		}
 
@@ -57,21 +56,19 @@ namespace fyreactor
 #ifdef HAVE_EPOLL
 		//2.偶数reactor是读reactor
 		//3.奇数reactor是写reactor
-		
-		
-		/*if ((readHandle == -1) || (writeHandle == -1))
+		handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
+		handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
+		if ((readHandle == -1) || (writeHandle == -1))
 		{
 			printf("epoll_create() Error.");
-		}*/
+		}
 
 		for (int i = 0; i < m_iReactorNum; i += 2)
 		{
-			handle_t readHandle = epoll_create(MAX_EVENT_SIZE);
 			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(client, REACTOR_READ, readHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexReadEpoll);
 		}
 		for (int i = 1; i < m_iReactorNum; i += 2)
 		{
-			handle_t writeHandle = epoll_create(MAX_EVENT_SIZE);
 			m_aTreadReactor[i].m_pReactor = new CReactor_Epoll(client, REACTOR_WRITE, writeHandle, m_mutexSendBuf, m_mapSendBuf, m_mutexWriteEpoll);
 		}
 #elif defined HAVE_IOCP
@@ -113,11 +110,10 @@ namespace fyreactor
 			if (sockId != -1)
 			{
 #ifdef HAVE_EPOLL
-				int index = sockId % (m_iReactorNum/2);
-				if (!m_aTreadReactor[2*index].m_pReactor->AddEvent(sockId, EVENT_READ))
+				if (!m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ))
 					return -1;
 
-				if (!m_aTreadReactor[1+2*index].m_pReactor->AddEvent(sockId, 0))
+				if (!m_aTreadReactor[1].m_pReactor->AddEvent(sockId, 0))
 					return -1;
 #elif defined HAVE_IOCP
 				if (!m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ))
@@ -152,10 +148,8 @@ namespace fyreactor
 		if (m_bServerOrClient)
 		{
 #ifdef HAVE_EPOLL
-			int index = sockId % (m_iReactorNum/2);
-
-			m_aTreadReactor[2*index].m_pReactor->AddEvent(sockId, EVENT_READ);
-			m_aTreadReactor[1+2*index].m_pReactor->AddEvent(sockId, 0);
+			m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
+			m_aTreadReactor[1].m_pReactor->AddEvent(sockId, 0);
 #elif defined HAVE_IOCP
 			m_aTreadReactor[0].m_pReactor->AddEvent(sockId, EVENT_READ);
 #endif
@@ -165,9 +159,7 @@ namespace fyreactor
 	void CReactorGroup::ReadySendMessage(socket_t sockId, const char* message, uint32_t len)
 	{
 #ifdef HAVE_EPOLL
-		int index = sockId % (m_iReactorNum / 2);
-
-		m_aTreadReactor[1+2*index].m_pReactor->ReadySendMessage(sockId, message, len);
+		m_aTreadReactor[1].m_pReactor->ReadySendMessage(sockId, message, len);
 #elif defined HAVE_IOCP
 		m_aTreadReactor[0].m_pReactor->ReadySendMessage(sockId, message, len);
 #endif
@@ -184,8 +176,8 @@ namespace fyreactor
 	void CReactorGroup::OnClose(socket_t sockId)
 	{
 #ifdef HAVE_EPOLL
-		//m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
-		//m_aTreadReactor[1].m_pReactor->DelEvent(sockId);
+		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
+		m_aTreadReactor[1].m_pReactor->DelEvent(sockId);
 #elif defined HAVE_IOCP
 		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
 #endif

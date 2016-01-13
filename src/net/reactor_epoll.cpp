@@ -158,9 +158,10 @@ namespace fyreactor
 		while (m_bRun)
 		{
 			{
-				//std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				std::unique_lock<std::mutex> lock (m_mutexEpoll);
 				//m_mutexEpoll.lock();
 				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
+			}
 
 				if (result <  0)
 				{
@@ -187,6 +188,7 @@ namespace fyreactor
 				{
 					if (m_aEvents[i].events & EPOLLIN)
 					{
+						bool hasClosed = false;
 						do {
 							readLen = Recv(m_aEvents[i].data.fd, buf1);
 
@@ -200,6 +202,8 @@ namespace fyreactor
 							}
 							else if (readLen == -1)
 							{
+								hasClosed = true;
+
 								if (m_pServer != NULL)
 									m_pServer->OnClose(m_aEvents[i].data.fd);
 								else if (m_pClient != NULL)
@@ -208,11 +212,16 @@ namespace fyreactor
 
 							//m_mutexEpoll.lock();
 						}while (readLen == MAX_MESSAGE_LEGNTH);
+
+						if (hasClosed == false)
+						{
+							CtlEvent (m_aEvents[i].data.fd, EVENT_READ);
+						}
 					}				
 				}
 
 				//m_mutexEpoll.unlock();
-			}
+			//}
 		}
 
 		delete []buf1;
@@ -230,7 +239,7 @@ namespace fyreactor
 		while (m_bRun)
 		{
 			{
-				//std::unique_lock<std::mutex> lock (m_mutexEpoll);
+				std::unique_lock<std::mutex> lock (m_mutexEpoll);
 				result = epoll_wait(m_iHandle, m_aEvents, READ_EVENT_SIZE, timeout < 0 ? INFINITE : timeout);
 			}
 
@@ -314,7 +323,7 @@ namespace fyreactor
 			op = EPOLLIN;
 			break;
 		case EVENT_READ:
-			op = EPOLLIN | EPOLLET;
+			op = EPOLLIN | EPOLLONESHOT | EPOLLET;
 			break;
 		case EVENT_WRITE:
 			op = EPOLLOUT | EPOLLONESHOT | EPOLLET;
