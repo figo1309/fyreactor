@@ -101,11 +101,11 @@ namespace fyreactor
 		}
 	}
 
-	socket_t CReactorGroup::Connect(const std::string& ip, int port)
+	socket_t CReactorGroup::Connect(const std::string& ip, int port, int myPort)
 	{
 		if (m_bServerOrClient == false)
 		{
-			socket_t sockId = m_aTreadReactor[0].m_pReactor->Connect(ip, port);
+			socket_t sockId = m_aTreadReactor[0].m_pReactor->Connect(ip, port, myPort);
 
 			if (sockId != -1)
 			{
@@ -176,8 +176,8 @@ namespace fyreactor
 	void CReactorGroup::OnClose(socket_t sockId)
 	{
 #ifdef HAVE_EPOLL
-		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
-		m_aTreadReactor[1].m_pReactor->DelEvent(sockId);
+		//m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
+		//m_aTreadReactor[1].m_pReactor->DelEvent(sockId);
 #elif defined HAVE_IOCP
 		m_aTreadReactor[0].m_pReactor->DelEvent(sockId);
 #endif

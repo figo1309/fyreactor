@@ -37,7 +37,7 @@ namespace fyreactor
 		virtual ~CReactor_Epoll();
 
 		bool Listen(const std::string& ip, int port);
-		socket_t Connect(const std::string& ip, int port);
+		socket_t Connect(const std::string& ip, int port, int myPort=0);
 		void Loop(int32 timeout);
 		bool AddEvent(socket_t sockId, uint32_t e);
 		bool CtlEvent(socket_t sockId, uint32_t e);

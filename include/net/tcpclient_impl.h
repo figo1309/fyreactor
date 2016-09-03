@@ -24,7 +24,7 @@ namespace fyreactor
 		CTCPClientImpl(std::recursive_mutex* mutex = NULL);
 		virtual ~CTCPClientImpl();
 
-		socket_t Connect(const std::string& ip, int port);
+		socket_t Connect(const std::string& ip, int port, int myPort = 0);
 		void Run();
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);
 		void Stop();

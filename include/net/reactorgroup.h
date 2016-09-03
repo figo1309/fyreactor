@@ -33,7 +33,7 @@ namespace fyreactor
 		virtual ~CReactorGroup();
 
 		void StartListen(const std::string& ip, int port);
-		socket_t Connect(const std::string& ip, int port);
+		socket_t Connect(const std::string& ip, int port, int myPort = 0);
 		void Run();
 		void OnNewConnection(socket_t sockId);
 		void ReadySendMessage(socket_t sockId, const char* message, uint32_t len);

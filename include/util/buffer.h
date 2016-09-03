@@ -11,8 +11,6 @@ discribe:		¼òµ¥»º³åÇø
 
 #include "../net/define.hpp"
 
-#define INIT_BUFFER_SIZE 1024			//1K
-
 namespace fyreactor
 {
 	class CBuffer :public nocopyable

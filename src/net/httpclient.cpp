@@ -78,8 +78,8 @@ int CHttpClient::Post(const std::string & strUrl, const std::string & strPost, s
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, OnWriteData);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&strResponse);
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 3);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 500);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 500);
 	res = curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
 	return res;

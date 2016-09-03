@@ -1,8 +1,8 @@
-/************************************************************************/
+ï»¿/************************************************************************/
 /*
 create time:	2015/6/3
-athor:			¸ğ·ÉÔ¾
-discribe:		epollÏìÓ¦Æ÷ÊµÏÖ
+athor:			è‘›é£è·ƒ
+discribe:		epollå“åº”å™¨å®ç°
 */
 /************************************************************************/
 #include <util/profile_test.h>
@@ -136,7 +136,7 @@ namespace fyreactor
 						newSock = DoAccept();
 						if (newSock != -1)
 						{
-							//Í¨Öªtcpserver
+							//é€šçŸ¥tcpserver
 							m_pServer->OnAccept(newSock);
 						}
 						else
@@ -229,7 +229,7 @@ namespace fyreactor
 
 	void CReactor_Epoll::LoopWrite(int32 timeout)
 	{
-		char* buf1 = new char[MAX_MESSAGE_LEGNTH];
+		CBuffer buf1;
 		int32_t result;
 		socket_t sockId;
 		int sendLen;
@@ -269,12 +269,14 @@ namespace fyreactor
 
 					{
 						std::unique_lock<std::mutex> lock(m_mutexSendBuf);
-						msg = m_mapSendBuf[sockId].PopBuf(len);
-						memcpy (buf1, msg, len);
+						buf1 = m_mapSendBuf[sockId];
+						m_mapSendBuf[sockId].PopBuf(len);
 					}
+
+					msg = buf1.PopBuf(len);
 					if (len > 0)
 					{
-						sendLen = Send(sockId, buf1, len);
+						sendLen = Send(sockId, msg, len);
 						if (sendLen < 0)
 						{
 							if (m_pServer != NULL)
@@ -288,25 +290,23 @@ namespace fyreactor
 				}					
 			}
 		}
-
-		delete []buf1;
 	}
 
 	void CReactor_Epoll::Loop(int32 timeout)
 	{
 		m_bRun = true;
 
-		//1. ½ÓÊÕÁ¬½Ó
+		//1. æ¥æ”¶è¿æ¥
 		if (m_eType == REACTOR_LISTEN)
 		{
 			LoopAccept(timeout);
 		}
-		//2. ¶Á
+		//2. è¯»
 		else if (m_eType == REACTOR_READ)
 		{
 			LoopRead(timeout);
 		}
-		//3. Ğ´
+		//3. å†™
 		else if (m_eType == REACTOR_WRITE)
 		{
 			LoopWrite(timeout);
@@ -323,10 +323,10 @@ namespace fyreactor
 			op = EPOLLIN;
 			break;
 		case EVENT_READ:
-			op = EPOLLIN | EPOLLONESHOT | EPOLLET;
+			op = EPOLLIN | EPOLLONESHOT/* | EPOLLET*/;
 			break;
 		case EVENT_WRITE:
-			op = EPOLLOUT | EPOLLONESHOT | EPOLLET;
+			op = EPOLLOUT | EPOLLONESHOT/* | EPOLLET*/;
 			break;
 		default:
 			break;
@@ -351,7 +351,7 @@ namespace fyreactor
 			{
 				//if (errno == ENOENT)
 				{
-					//´ËÊ±±íÃ÷socketÒÑ¾­¹Ø±Õ£¬²¢ÇÒÖ´ĞĞÁËDelEvent
+					//æ­¤æ—¶è¡¨æ˜socketå·²ç»å…³é—­ï¼Œå¹¶ä¸”æ‰§è¡Œäº†DelEvent
 					std::unique_lock<std::mutex> lock(m_mutexSendBuf);
 					m_mapSendBuf.erase(sockId);
 					return;
@@ -360,7 +360,7 @@ namespace fyreactor
 
 			if (res == -1)
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(3));
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 			else
 			{
@@ -419,10 +419,10 @@ namespace fyreactor
 		}
 
 		{
-			int keepalive = 1; // ¿ªÆôkeepaliveÊôĞÔ
-			int keepidle = 60; // Èç¸ÃÁ¬½ÓÔÚ60ÃëÄÚÃ»ÓĞÈÎºÎÊı¾İÍùÀ´,Ôò½øĞĞÌ½²â
-			int keepinterval = 5; // Ì½²âÊ±·¢°üµÄÊ±¼ä¼ä¸ôÎª5 Ãë
-			int keepcount = 3; // Ì½²â³¢ÊÔµÄ´ÎÊı.Èç¹ûµÚ1´ÎÌ½²â°ü¾ÍÊÕµ½ÏìÓ¦ÁË,Ôòºó2´ÎµÄ²»ÔÙ·¢.
+			int keepalive = 1; // å¼€å¯keepaliveå±æ€§
+			int keepidle = 60; // å¦‚è¯¥è¿æ¥åœ¨60ç§’å†…æ²¡æœ‰ä»»ä½•æ•°æ®å¾€æ¥,åˆ™è¿›è¡Œæ¢æµ‹
+			int keepinterval = 5; // æ¢æµ‹æ—¶å‘åŒ…çš„æ—¶é—´é—´éš”ä¸º5 ç§’
+			int keepcount = 3; // æ¢æµ‹å°è¯•çš„æ¬¡æ•°.å¦‚æœç¬¬1æ¬¡æ¢æµ‹åŒ…å°±æ”¶åˆ°å“åº”äº†,åˆ™å2æ¬¡çš„ä¸å†å‘.
 			setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive ));
 			setsockopt(sock, SOL_TCP, TCP_KEEPIDLE, (void*)&keepidle , sizeof(keepidle ));
 			setsockopt(sock, SOL_TCP, TCP_KEEPINTVL, (void *)&keepinterval , sizeof(keepinterval ));
@@ -484,8 +484,8 @@ namespace fyreactor
 			return false;
 		}
 
-		//listenµÄµÚ¶ş¸ö²ÎÊı¼´backlog,²âÊÔ·¢ÏÖÊıÖµ+1´ú±íºôÈëÁ¬½ÓÇëÇó¶ÓÁĞ³¤¶È£¬¼´Ä¿Ç°¶ÓÁĞ³¤¶ÈÎª9
-		//²Î¼ûtcp/ipĞ­Òé 18.11.4
+		//listençš„ç¬¬äºŒä¸ªå‚æ•°å³backlog,æµ‹è¯•å‘ç°æ•°å€¼+1ä»£è¡¨å‘¼å…¥è¿æ¥è¯·æ±‚é˜Ÿåˆ—é•¿åº¦ï¼Œå³ç›®å‰é˜Ÿåˆ—é•¿åº¦ä¸º9
+		//å‚è§tcp/ipåè®® 18.11.4
 		if (::listen(listen_socket, 8) == -1)
 		{
 			printf("socket listen faild, errno %d.", errno);
@@ -499,7 +499,7 @@ namespace fyreactor
 		return true;
 	}
 
-	socket_t CReactor_Epoll::Connect(const std::string& ip, int port)
+	socket_t CReactor_Epoll::Connect(const std::string& ip, int port, int myPort)
 	{
 		struct sockaddr_in addr;
 		addr.sin_family = AF_INET;
@@ -510,6 +510,20 @@ namespace fyreactor
 		if (!InitSocket(sockId))
 			return -1;
 
+		if (myPort != 0)
+		{
+			struct sockaddr_in client;
+			client.sin_family = AF_INET;
+			client.sin_addr.s_addr = htonl(INADDR_ANY);
+			client.sin_port = htons(myPort);
+
+			if (::bind(sockId, (sockaddr *)&client, sizeof(client)) == -1)
+			{
+				printf("socket bind faild, errno %d.", errno);
+				return false;
+			}
+		}
+
 		int retryNum = 3;
 		do
 		{
@@ -517,6 +531,7 @@ namespace fyreactor
 			{
 				return sockId;
 			}
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}while(--retryNum >= 0);
 		
 		return -1;
@@ -565,10 +580,7 @@ namespace fyreactor
 
 		while (now_size > 0)
 		{
-			if (now_size < MAX_MESSAGE_LEGNTH)
-				send_len = now_size;
-			else
-				send_len = MAX_MESSAGE_LEGNTH;
+			send_len = now_size;
 
 			result = ::send(sockId, (message + (len - now_size)), send_len, 0);
 			if (result < now_size)

@@ -28,7 +28,7 @@ namespace fyreactor
 		virtual ~CReactor(){}
 
 		virtual bool Listen(const std::string& ip, int port) = 0;
-		virtual socket_t Connect(const std::string& ip, int port) = 0;
+		virtual socket_t Connect(const std::string& ip, int port, int myPort) = 0;
 		virtual void Loop(int32 timeout) = 0;
 		virtual bool AddEvent(socket_t sockId, uint32_t e) = 0;
 		virtual bool CtlEvent(socket_t sockId, uint32_t e) = 0;

@@ -22,9 +22,9 @@ namespace fyreactor
 	{
 	}
 
-	socket_t CTCPClientImpl::Connect(const std::string& ip, int port)
+	socket_t CTCPClientImpl::Connect(const std::string& ip, int port, int myPort)
 	{
-		socket_t newSock = m_reactorGroup.Connect(ip, port);
+		socket_t newSock = m_reactorGroup.Connect(ip, port, myPort);
 		if (newSock != -1)
 		{
 			m_setSocket.insert(newSock);
@@ -71,6 +71,8 @@ namespace fyreactor
 #elif defined HAVE_IOCP
 		::closesocket(sockId);
 #endif
+
+		OnClose(sockId);
 	}
 
 	void CTCPClientImpl::OnClose(socket_t sockId)

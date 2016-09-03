@@ -8,6 +8,9 @@ discribe:		¼òµ¥»º³åÇø
 
 #include <util/buffer.h>
 
+#define INIT_BUFFER_SIZE 10240			//1K
+#define MAX_BUFFER_SIZE (MAX_MESSAGE_LEGNTH * 50)
+
 namespace fyreactor
 {
 
@@ -38,22 +41,31 @@ namespace fyreactor
 
 	CBuffer& CBuffer::operator =(const CBuffer& buffer)
 	{
-		m_iSize = buffer.m_iSize;
-		m_iLen = buffer.m_iLen;
-
-		if (m_pBuf != NULL)
+		if (m_iSize < buffer.m_iSize)
 		{
-			delete[]m_pBuf;
+			m_iSize = buffer.m_iSize;
+			m_iLen = buffer.m_iLen;
+
+			if (m_pBuf != NULL)
+			{
+				delete[]m_pBuf;
+			}
+			m_pBuf = new char[m_iSize];
+			memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
 		}
-		m_pBuf = new char[m_iSize];
-		memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
+		else
+		{
+			m_iLen = buffer.m_iLen;
+			memcpy(m_pBuf, buffer.m_pBuf, m_iLen);
+
+		}
 
 		return *this;
 	}
 
 	int32_t CBuffer::AddBuf(const char* msg, uint32_t len)
 	{
-		if (m_iLen + len > MAX_MESSAGE_LEGNTH)
+		if (m_iLen + len > MAX_BUFFER_SIZE)
 			return -1;
 
 		if (m_iSize >= m_iLen + len)
@@ -87,26 +99,16 @@ namespace fyreactor
 
 	uint32_t CBuffer::NextPowerOf2(uint32_t n) const
 	{
-		/*double dLog2 = log2(n);
+		double dLog2 = log2(n);
 		uint32_t iLog2 = (uint32_t)dLog2 + 1;
-		uint32_t ret = exp2(iLog2);
+		uint32_t ret = exp2(iLog2);		
 
-		return ret;*/
-
-		if (n < INIT_BUFFER_SIZE)
+		if (ret < INIT_BUFFER_SIZE)
 			return INIT_BUFFER_SIZE;
-		if (n < 2048)
-			return 2048;
-		if (n < 4096)
-			return 4096;
-		if (n < 8192)
-			return 8192;
-		if (n < 16384)
-			return 16384;
-		if (n < 32768)
-			return 32768;
-		
-		return MAX_MESSAGE_LEGNTH;
+		else if (ret > MAX_BUFFER_SIZE)
+			return MAX_BUFFER_SIZE;
+
+		return ret;
 	}
 }
 

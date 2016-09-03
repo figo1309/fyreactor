@@ -351,7 +351,7 @@ namespace fyreactor
 		return true;
 	}
 
-	socket_t CReactor_Iocp::Connect(const std::string& ip, int port)
+	socket_t CReactor_Iocp::Connect(const std::string& ip, int port, int myPort)
 	{
 		struct sockaddr_in addr;
 		addr.sin_family = AF_INET;

@@ -20,9 +20,9 @@ namespace fyreactor
 		delete m_pTCPClientImpl;
 	}
 
-	socket_t CTCPClient::Connect(const std::string& ip, int port)
+	socket_t CTCPClient::Connect(const std::string& ip, int port, int myPort)
 	{
-		return m_pTCPClientImpl->Connect(ip, port);
+		return m_pTCPClientImpl->Connect(ip, port, myPort);
 	}
 
 	void CTCPClient::Run()

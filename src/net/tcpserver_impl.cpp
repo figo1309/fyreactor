@@ -96,6 +96,8 @@ namespace fyreactor
 #elif defined HAVE_IOCP
 		::closesocket(sockId);
 #endif
+
+		OnClose(sockId);
 	}
 
 	void CTCPServerImpl::OnClose(socket_t sockId)

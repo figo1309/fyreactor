@@ -10,7 +10,7 @@ discribe:		定时器头文件
 #include <ctime>
 #include <sys/types.h>
 #include <sys/timeb.h> 
-#include <time.h>
+#include <sys/time.h>
 
 namespace fyreactor
 {
@@ -194,9 +194,9 @@ namespace fyreactor
 		_ftime_s(&tb);
 		return tb.time * 1000 + tb.millitm;
 #elif defined HAVE_LINUX
-		struct timeb tb;
-		ftime(&tb);
-		return tb.time * 1000 + tb.millitm;
+		struct timeval currentTv;
+		gettimeofday(&currentTv, NULL);
+		return (currentTv.tv_sec * 1000 + currentTv.tv_usec / 1000);
 #endif
 	}
 
