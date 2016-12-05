@@ -286,6 +286,10 @@ namespace fyreactor
 
 							break;
 						}
+						else if (sendLen < len)
+						{
+							ReadySendMessage(sockId, msg + sendLen , len - sendLen);
+						}
 					}
 				}					
 			}
@@ -578,7 +582,8 @@ namespace fyreactor
 		int32 result = 0;
 		int32 send_len = 0;
 
-		while (now_size > 0)
+		int retryTime = 0;
+		while ((now_size > 0) && (++retryTime < 10))
 		{
 			send_len = now_size;
 
